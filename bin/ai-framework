@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+# Bootstrap from a verified archive. Requires Bash, curl, unzip, sha256sum or shasum, and standard Unix tools.
+set -eu
+fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
+hash() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | awk '{print $1}'; else shasum -a 256 "$1" | awk '{print $1}'; fi; }
+usage() { printf '%s\n' 'Usage: ai-framework init project DIR --commit SHA --sha256 DIGEST [--archive ZIP]' '       ai-framework framework update DIR --commit SHA --sha256 DIGEST [--archive ZIP]'; }
+[ "$#" -ge 3 ] || { usage >&2; exit 1; }
+case "$1 $2" in 'init project') action=init ;; 'framework update') action=update ;; *) usage >&2; exit 1 ;; esac
+project=$3; shift 3
+commit= sha= archive=
+while [ "$#" -gt 0 ]; do
+  [ "$#" -ge 2 ] || fail 'option requires a value'
+  case "$1" in --commit) commit=$2 ;; --sha256) sha=$2 ;; --archive) archive=$2 ;; *) fail "unknown option: $1" ;; esac
+  shift 2
+done
+[[ "$commit" =~ ^[0-9a-f]{40}$ ]] || fail 'commit must be 40 lowercase hexadecimal characters'
+[[ "$sha" =~ ^[0-9a-f]{64}$ ]] || fail 'SHA-256 must be 64 lowercase hexadecimal characters'
+[ ! -L "$project" ] || fail 'project is a symlink'
+[ ! -e "$project" ] || [ -d "$project" ] || fail 'project is not a directory'
+for cmd in unzip awk diff mktemp; do command -v "$cmd" >/dev/null 2>&1 || fail "missing required command: $cmd"; done
+command -v sha256sum >/dev/null 2>&1 || command -v shasum >/dev/null 2>&1 || fail 'missing sha256sum or shasum'
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/ai-framework.XXXXXXXX") || fail 'cannot create temporary directory'
+applied=0
+cleanup() { rm -rf -- "$tmp"; }
+trap cleanup EXIT
+mkdir -p "$tmp/new" "$tmp/old"
+if [ -n "$archive" ]; then
+  [ -f "$archive" ] || fail 'archive not found'
+  cp -- "$archive" "$tmp/archive.zip"
+else
+  command -v curl >/dev/null 2>&1 || fail 'curl is required for downloads'
+  url="https://api.github.com/repos/sarawuth-pimsai/ai-dual-orchestrator-framework/zipball/$commit"
+  # Keep credentials out of process arguments; curl reads the header from a private config file.
+  if [ -n "${GITHUB_TOKEN:-}" ]; then
+    case "$GITHUB_TOKEN" in *[!a-zA-Z0-9_]*) fail 'invalid characters in GITHUB_TOKEN' ;; esac
+    umask 077
+    printf 'header = "Authorization: Bearer %s"\n' "$GITHUB_TOKEN" > "$tmp/curl.conf"
+    curl --fail --silent --show-error --location --max-time 60 --max-filesize 20971520 --config "$tmp/curl.conf" -H 'Accept: application/vnd.github+json' -H 'User-Agent: ai-framework-bootstrap' "$url" -o "$tmp/archive.zip" || fail 'archive download failed'
+  else
+    curl --fail --silent --show-error --location --max-time 60 --max-filesize 20971520 -H 'Accept: application/vnd.github+json' -H 'User-Agent: ai-framework-bootstrap' "$url" -o "$tmp/archive.zip" || fail 'archive download failed'
+  fi
+fi
+[ "$(wc -c < "$tmp/archive.zip" | tr -d ' ')" -le 20971520 ] || fail 'archive too large'
+[ "$(hash "$tmp/archive.zip")" = "$sha" ] || fail 'archive SHA-256 mismatch; no files changed'
+unzip -Z1 "$tmp/archive.zip" > "$tmp/entries" || fail 'invalid ZIP archive'
+cat > "$tmp/docs" <<'DOCS'
+AGENTS.md
+GOVERNANCE.md
+USAGE.md
+roles/BUSINESS_ORCHESTRATOR.md
+roles/TECH_ORCHESTRATOR.md
+roles/PM_AGENT.md
+roles/SPECIALISTS.md
+protocols/HANDOFF_PROTOCOL.md
+protocols/TECH_EXECUTION.md
+protocols/PM_TRACKING.md
+templates/PROJECT_BOOTSTRAP.md
+templates/DECISION_RECORD.md
+templates/HANDOFF.md
+templates/TASK_CONTRACT.md
+templates/STATUS_REPORT.md
+templates/RISK_REGISTER.md
+DOCS
+while IFS= read -r doc; do
+  # Only one top-level directory is allowed before the expected document path.
+  entry=$(awk -v d="$doc" 'index($0,"/") { n=substr($0,index($0,"/")+1); if(n==d) print }' "$tmp/entries")
+  [ "$(printf '%s\n' "$entry" | wc -l | tr -d ' ')" = 1 ] && [ -n "$entry" ] || fail "missing or duplicate archive document: $doc"
+  case "$entry" in /*|../*|*'/../'*|*'\\'*) fail 'unsafe archive entry' ;; esac
+  prefix=${entry%%/*}
+  [[ "$prefix" =~ ^[a-zA-Z0-9_-]+$ ]] || fail 'unsafe archive root directory'
+  size=$(unzip -l "$tmp/archive.zip" "$entry" | awk -v name="$entry" '$4==name {print $1}')
+  [[ "$size" =~ ^[0-9]+$ ]] && [ "$size" -le 1048576 ] || fail "invalid or oversized document: $doc"
+  out="$tmp/new/.ai-framework/framework/$doc"; mkdir -p "$(dirname "$out")"
+  unzip -p "$tmp/archive.zip" "$entry" > "$out" || fail "cannot read $doc"
+  [ "$(wc -c < "$out" | tr -d ' ')" -le 1048576 ] || fail "document too large: $doc"
+done < "$tmp/docs"
+cat > "$tmp/new/AGENTS.md" <<'TEXT'
+# AI Framework project instructions
+
+Read `.ai-framework/framework/AGENTS.md`, `GOVERNANCE.md` and relevant role and protocol files under `.ai-framework/framework/` before acting. Identify this project's canonical repository, board and approved decisions. Project context and decisions belong in this project.
+
+Business GPT and Tech Claude are peers; PM supports both. Founder retains final approval. A handoff requires actual receiver acknowledgment. Do not infer agent execution from a GitHub comment.
+TEXT
+cp "$tmp/new/AGENTS.md" "$tmp/new/CLAUDE.md"
+printf '\nFor Tech, read `.ai-framework/framework/roles/TECH_ORCHESTRATOR.md`.\n' >> "$tmp/new/CLAUDE.md"
+printf '%s\n' "$commit" > "$tmp/new/.ai-framework/VERSION"
+{ printf '%s\n' AGENTS.md CLAUDE.md .ai-framework/VERSION; while IFS= read -r doc; do printf '.ai-framework/framework/%s\n' "$doc"; done < "$tmp/docs"; } > "$tmp/managed"
+: > "$tmp/new/.ai-framework/MANIFEST"
+while IFS= read -r path; do printf '%s  %s\n' "$(hash "$tmp/new/$path")" "$path" >> "$tmp/new/.ai-framework/MANIFEST"; done < "$tmp/managed"
+printf 'schema: 2\nrepository: sarawuth-pimsai/ai-dual-orchestrator-framework\ncommit: %s\narchive_sha256: %s\n' "$commit" "$sha" > "$tmp/new/.ai-framework/config.yaml"
+printf '%s\n' .ai-framework/MANIFEST .ai-framework/config.yaml >> "$tmp/managed"
+# Reject symlinks in every component, including existing parent directories.
+check_path() {
+  local p="$project" part rest="$1"
+  while :; do
+    part=${rest%%/*}; p="$p/$part"; [ ! -L "$p" ] || fail "symlink in managed path: $1"
+    [ "$rest" != "$part" ] || break
+    rest=${rest#*/}
+  done
+}
+while IFS= read -r path; do check_path "$path"; [ ! -e "$project/$path" ] || [ -f "$project/$path" ] || fail "not a regular file: $path"; done < "$tmp/managed"
+if [ "$action" = init ]; then
+  found=0; same=1
+  while IFS= read -r path; do
+    if [ -e "$project/$path" ]; then found=1; cmp -s "$project/$path" "$tmp/new/$path" || same=0; else same=0; fi
+  done < "$tmp/managed"
+  if [ "$found" = 1 ]; then [ "$same" = 1 ] && { echo 'Already initialized; no changes.'; exit 0; }; fail 'managed paths already exist; no files changed'; fi
+else
+  [ -f "$project/.ai-framework/config.yaml" ] && [ -f "$project/.ai-framework/MANIFEST" ] || fail 'missing compatible configuration'
+  # Strict fixed format avoids executing or interpreting project-controlled data.
+  old_commit=$(sed -n '3s/^commit: //p' "$project/.ai-framework/config.yaml")
+  old_sha=$(sed -n '4s/^archive_sha256: //p' "$project/.ai-framework/config.yaml")
+  [[ "$old_commit" =~ ^[0-9a-f]{40}$ && "$old_sha" =~ ^[0-9a-f]{64}$ ]] || fail 'invalid or incompatible config'
+  printf 'schema: 2\nrepository: sarawuth-pimsai/ai-dual-orchestrator-framework\ncommit: %s\narchive_sha256: %s\n' "$old_commit" "$old_sha" > "$tmp/expected-config"
+  cmp -s "$tmp/expected-config" "$project/.ai-framework/config.yaml" || fail 'incompatible config schema'
+  : > "$tmp/actual-manifest"
+  while IFS= read -r path; do
+    case "$path" in .ai-framework/MANIFEST|.ai-framework/config.yaml) continue ;; esac
+    [ -f "$project/$path" ] || fail "missing managed file: $path"
+    printf '%s  %s\n' "$(hash "$project/$path")" "$path" >> "$tmp/actual-manifest"
+  done < "$tmp/managed"
+  cmp -s "$tmp/actual-manifest" "$project/.ai-framework/MANIFEST" || fail 'managed files were modified; reconcile before update'
+  [ "$(cat "$project/.ai-framework/VERSION")" = "$old_commit" ] || fail 'VERSION does not match config'
+fi
+# Save a complete before-image and presence list for rollback and race detection.
+: > "$tmp/present"
+while IFS= read -r path; do
+  if [ -f "$project/$path" ]; then mkdir -p "$tmp/old/$(dirname "$path")"; cp "$project/$path" "$tmp/old/$path"; printf '%s\n' "$path" >> "$tmp/present"; fi
+done < "$tmp/managed"
+if [ "$action" = update ]; then
+  changed=0
+  while IFS= read -r path; do
+    if ! cmp -s "$tmp/old/$path" "$tmp/new/$path"; then
+      changed=1; printf '\n--- %s ---\n' "$path"
+      diff -u "$tmp/old/$path" "$tmp/new/$path" || [ "$?" = 1 ] || fail 'diff failed'
+    fi
+  done < "$tmp/managed"
+  [ "$changed" = 1 ] || { echo 'Already at requested version; no changes.'; exit 0; }
+  printf 'Apply these changes? Type yes: '
+  IFS= read -r answer || fail 'confirmation unavailable'
+  [ "$answer" = yes ] || { echo 'Cancelled; no changes.'; exit 0; }
+fi
+while IFS= read -r path; do
+  check_path "$path"
+  if [ -f "$tmp/old/$path" ]; then cmp -s "$tmp/old/$path" "$project/$path" || fail 'files changed since preview'; else [ ! -e "$project/$path" ] || fail 'files changed since preview'; fi
+done < "$tmp/managed"
+rollback() {
+  if [ "$applied" = 1 ]; then
+    printf '%s\n' 'Write failed; attempting rollback.' >&2
+    while IFS= read -r path; do
+      if [ -f "$tmp/old/$path" ]; then mkdir -p "$project/$(dirname "$path")"; cp "$tmp/old/$path" "$project/$path" || printf 'Restore manually: %s\n' "$path" >&2; else rm -f "$project/$path" || true; fi
+    done < "$tmp/managed"
+  fi
+}
+trap 'rollback; cleanup' EXIT
+applied=1
+while IFS= read -r path; do
+  check_path "$path"
+  mkdir -p "$project/$(dirname "$path")" || fail "cannot create parent for $path"
+  # Same-directory rename avoids leaving a partly written destination file.
+  dest_tmp=$(mktemp "$project/$(dirname "$path")/.ai-framework-write.XXXXXXXX") || fail 'cannot create temporary file'
+  cp "$tmp/new/$path" "$dest_tmp" && mv -f "$dest_tmp" "$project/$path" || { rm -f "$dest_tmp"; fail "cannot write $path"; }
+done < "$tmp/managed"
+applied=0
+printf '%s complete: %s\n' "$action" "$commit"

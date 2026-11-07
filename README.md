@@ -24,20 +24,20 @@ Both orchestrators are peers, report to Founder and coordinate via one project's
 
 ## Bootstrap CLI
 
-The Python 3.9+ CLI installs project entry points and a fixed subset of the framework documents without a submodule or a framework clone inside the project. It is a local tool, not an agent runtime. From a trusted checkout or an extracted framework archive, install it with `python3 -m pip install .` (or run `python3 -m ai_framework` from that directory without installation). The existing all-rights-reserved license applies.
+The shell CLI installs project entry points and a fixed subset of the framework documents without a submodule, Python, or a framework clone inside the project. It needs Bash, `unzip`, `curl` for downloads, `sha256sum` or `shasum`, and standard Unix utilities. macOS and Linux are supported when these tools are present; native Windows requires a compatible Unix environment. Obtain `bin/ai-framework` from a trusted copy of this repository and run `chmod +x ai-framework`. It is a local tool, not an agent runtime. The existing all-rights-reserved license applies.
 
 Obtain a full 40-character framework commit and the SHA-256 of the **exact ZIP archive** through a trusted channel. For a private GitHub repository set `GITHUB_TOKEN` to a token with repository read access; keep it out of shell history and project files. The CLI fetches the commit-specific GitHub ZIP over HTTPS, or use `--archive /path/to/framework.zip` for a previously downloaded archive. The supplied digest must match the exact ZIP bytes. Do not trust a checksum obtained solely from the same unverified source as the archive.
 
 ```sh
-ai-framework init project /path/to/project --commit FULL_40_CHAR_COMMIT --sha256 TRUSTED_64_CHAR_SHA256
-ai-framework framework update /path/to/project --commit NEW_40_CHAR_COMMIT --sha256 TRUSTED_64_CHAR_SHA256
+./ai-framework init project /path/to/project --commit FULL_40_CHAR_COMMIT --sha256 TRUSTED_64_CHAR_SHA256
+./ai-framework framework update /path/to/project --commit NEW_40_CHAR_COMMIT --sha256 TRUSTED_64_CHAR_SHA256
 ```
 
 `init` refuses existing managed paths and is safe to repeat with identical files. Move or reconcile existing instructions yourself before initialization; the tool never silently overwrites them. Update checks configuration compatibility and managed file hashes, shows a diff, and requires the operator to type `yes`. Local edits to managed files block updates and must be reconciled first. To restore an earlier version, run `framework update` with its previous commit and trusted archive digest, review the diff and confirm. Keep the older archive if GitHub serves different ZIP bytes later. Save a project backup or use version control before updating: normal write errors trigger rollback, but an interruption or machine failure may require manual recovery.
 
-The generated `AGENTS.md` and `CLAUDE.md` point to `.ai-framework/framework/`; the project owns its own context, decisions and handoffs. `.ai-framework/config.yaml` is JSON-formatted YAML 1.2 and `.ai-framework/VERSION` records the commit. Commit these files as appropriate for the project. The archive digest verifies bytes against the independently supplied digest; it does not prove an arbitrary local ZIP corresponds to the stated Git commit. See `ARCHITECTURE_BOOTSTRAP.md` for security and recovery limitations.
+The generated `AGENTS.md` and `CLAUDE.md` point to `.ai-framework/framework/`; the project owns its own context, decisions and handoffs. `.ai-framework/config.yaml` records schema 2 and the pin, `.ai-framework/MANIFEST` tracks managed file hashes, and `.ai-framework/VERSION` records the commit. Commit these files as appropriate for the project. The archive digest verifies bytes against the independently supplied digest; it does not prove an arbitrary local ZIP corresponds to the stated Git commit. See `ARCHITECTURE_BOOTSTRAP.md` for security and recovery limitations.
 
-Troubleshooting: a 404 or authentication error requires verified private-repository access; a SHA mismatch requires the original archive and independently trusted digest; an incompatible schema or modified managed file requires manual reconciliation. No file is intentionally overwritten to resolve these errors. Run `python3 -m unittest discover -s tests -v` from the framework source to validate the CLI.
+Troubleshooting: a 404 or authentication error requires verified private-repository access; a SHA mismatch requires the original archive and independently trusted digest; an incompatible schema or modified managed file requires manual reconciliation. No file is intentionally overwritten to resolve these errors. Run `bash tests/test_shell.sh` from the framework source to validate the shell CLI (the tests also need `zip`). The previous Python CLI remains available but uses schema 1; the two implementations cannot update each other's projects. Migrate manually after backing up and reviewing existing files.
 
 ## Commands (natural language, not installed CLI commands)
 
