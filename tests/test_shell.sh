@@ -15,6 +15,16 @@ printf '\nnew version\n' >> "$tmp/source/framework/GOVERNANCE.md"
 h2=$(hash "$tmp/two.zip"); c2=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 run() { "$cli" "$@" >/dev/null; }
 run init project "$tmp/project" --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip"
+mkdir "$tmp/tagbin"
+cat > "$tmp/tagbin/git" <<EOF
+#!/usr/bin/env bash
+printf '%s\\t%s\\n' '$c2' 'refs/tags/v1.0.0' '$c1' 'refs/tags/v1.0.0^{}'
+EOF
+chmod +x "$tmp/tagbin/git"
+PATH="$tmp/tagbin:$PATH" run init project "$tmp/versioned" --version v1.0.0 --sha256 "$h1" --archive "$tmp/one.zip"
+[ "$(cat "$tmp/versioned/.ai-framework/VERSION")" = "$c1" ]
+if PATH="$tmp/tagbin:$PATH" run init project "$tmp/badversion" --version invalid --sha256 "$h1" --archive "$tmp/one.zip" 2>/dev/null; then exit 1; fi
+if PATH="$tmp/tagbin:$PATH" run init project "$tmp/both" --version v1.0.0 --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip" 2>/dev/null; then exit 1; fi
 run init project "$tmp/project" --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip"
 printf 'decision\n' > "$tmp/project/decision.md"
 printf 'no\n' | run framework update "$tmp/project" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip"

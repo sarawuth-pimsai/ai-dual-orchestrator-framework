@@ -33,6 +33,13 @@ Obtain a full 40-character framework commit and the SHA-256 of the **exact ZIP a
 ./ai-framework framework update /path/to/project --commit NEW_40_CHAR_COMMIT --sha256 TRUSTED_64_CHAR_SHA256
 ```
 
+Alternatively, use a release tag such as `--version v1.0.0` in place of `--commit`. This requires Git and network access to resolve the tag to a commit; the resolved commit is recorded in the project. Verify that the tag points to the intended commit through a trusted channel, and provide the trusted SHA-256 of that commit's exact ZIP. Tags can move, so a tag name alone is not an immutable pin. For example:
+
+```sh
+./ai-framework init project . --version v1.0.0 --sha256 TRUSTED_64_CHAR_SHA256
+./ai-framework framework update . --version v1.1.0 --sha256 TRUSTED_64_CHAR_SHA256
+```
+
 `init` refuses existing managed paths and is safe to repeat with identical files. Move or reconcile existing instructions yourself before initialization; the tool never silently overwrites them. Update checks configuration compatibility and managed file hashes, shows a diff, and requires the operator to type `yes`. Local edits to managed files block updates and must be reconciled first. To restore an earlier version, run `framework update` with its previous commit and trusted archive digest, review the diff and confirm. Keep the older archive if GitHub serves different ZIP bytes later. Save a project backup or use version control before updating: normal write errors trigger rollback, but an interruption or machine failure may require manual recovery.
 
 The generated `AGENTS.md` and `CLAUDE.md` point to `.ai-framework/framework/`; the project owns its own context, decisions and handoffs. `.ai-framework/config.yaml` records schema 2 and the pin, `.ai-framework/MANIFEST` tracks managed file hashes, and `.ai-framework/VERSION` records the commit. Commit these files as appropriate for the project. The archive digest verifies bytes against the independently supplied digest; it does not prove an arbitrary local ZIP corresponds to the stated Git commit. See `ARCHITECTURE_BOOTSTRAP.md` for security and recovery limitations.
