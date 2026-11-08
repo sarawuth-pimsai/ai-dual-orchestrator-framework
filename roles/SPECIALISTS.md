@@ -4,7 +4,7 @@ Specialists work under their owning orchestrator and within an authorized task c
 
 | Owner | Specialist | Responsibility and output |
 |---|---|---|
-| Business | Product | Requirements, scope, business rules and measurable acceptance criteria. |
+| Tech | Product Owner (PO) | Canonical product requirements, feature IDs, proposed scope, business rules and measurable acceptance criteria; reconcile Business inputs and seek Founder approval where required. |
 | Business | UX/UI | User flows, accessibility assumptions and design contract. |
 | Business | Marketing | Audience, positioning and campaign proposals. |
 | Business | Finance | Financial assumptions, forecast and budget proposals. |

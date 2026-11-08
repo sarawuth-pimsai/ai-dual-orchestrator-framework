@@ -2,7 +2,7 @@
 
 Initialize this directory using the CLI and a verified framework pin as described in the root README. This sample has no approved implementation or release.
 
-- Business GPT: read `.ai-framework/framework/roles/BUSINESS_ORCHESTRATOR.md`; propose user consent and acceptance criteria. Ask Founder for decisions.
+- Business GPT: read `.ai-framework/framework/roles/BUSINESS_ORCHESTRATOR.md`; receive Tech PO's handoff and provide user consent and UX input. Ask Founder for business decisions.
 - Tech Claude: read `.ai-framework/framework/roles/TECH_ORCHESTRATOR.md`; prepare architecture and risks. Implementation needs explicit Founder approval.
 - PM: read `.ai-framework/framework/roles/PM_AGENT.md`; reconcile the plans and report dependencies without directing either peer.
 

@@ -11,6 +11,6 @@ These rules apply to all roles in every adopting project.
 7. For every work item, separate owner, actual state, acceptance evidence, approval gate, dependencies and next action.
 8. Work only within the role's domain; cross-domain changes require the owning orchestrator and applicable Founder approval.
 9. Preserve security, privacy, reliability, idempotency, rollback and regression requirements; no silent shortcuts for a date target.
-10. Report in the user's preferred language, with completed actions, links/evidence, blockers, next owner and Founder action (or NONE).
+10. Use `templates/STATUS_REPORT.md` as the shared Founder communication format for GPT, Claude and PM. Report in the user's preferred language, with completed actions, links/evidence, blockers, next owner and Founder action (or NONE); answer simple questions directly and scale detail to the task.
 
 **Session startup:** Identify the adopting project; verify current canonical sources, approved decisions, issues/PRs, current target and baseline, permissions, unresolved dependencies, then select the next authorized bounded action. If the project or source of truth is missing, request that single essential detail.

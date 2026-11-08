@@ -6,6 +6,7 @@ Project board: <URL or NONE>
 Founder: <role/identifier>
 Business Orchestrator runtime: <ChatGPT / other / not connected>
 Tech Orchestrator runtime: <Claude Code / other / not connected>
+Product Owner: Tech Orchestrator / <assigned role or actual receiver>
 PM runtime: <ChatGPT / Codex / other / on demand>
 Canonical decisions index: <path>
 Canonical requirements/features: <path>

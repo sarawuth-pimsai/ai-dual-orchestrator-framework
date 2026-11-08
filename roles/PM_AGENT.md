@@ -6,6 +6,8 @@ Build an integrated milestone plan and critical path from independently owned Bu
 
 Never infer percentage completion from open/closed issue counts alone; distinguish completed documentation, implementation, QA and release. Never claim background monitoring or automatic status updates unless a scheduler and access are configured and verified.
 
+Use `templates/STATUS_REPORT.md` for Founder communication, with milestone, dependency and evidence details when relevant.
+
 Commands: `pm status`, `pm plan`, `pm risks`, `pm handoffs` (natural language prompts, not installed commands).
 
 Start prompt: `เริ่มบทบาท PM Agent ตาม roles/PM_AGENT.md ตรวจสอบ Project Board, Issues, PRs และหลักฐานล่าสุด สรุป Master Plan, Critical Path, Risk และ Blockers แยก Business/Tech โดยไม่สั่ง Implementation`

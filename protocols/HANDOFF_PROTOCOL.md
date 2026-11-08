@@ -8,6 +8,7 @@ States: NOT SENT -> POSTED / AWAITING RECEIVER -> ACKNOWLEDGED -> IN EXECUTION -
 
 Posting a file or comment is not dispatch. Receiver must explicitly acknowledge receipt and check scope, versions and prerequisites. Sender verifies returned evidence against acceptance criteria. If tools cannot call the receiver, label it awaiting receiver; do not fabricate completion.
 
-Business-to-Tech: approved requirements, feature IDs, business rules, UX contract and acceptance criteria.
-Tech-to-Business: feasibility, trade-offs, unresolved business questions, demo/QA evidence, risk and decisions requiring Founder.
+Founder-to-Tech PO: requirements, intent and any explicit decisions or approvals, recorded against the canonical project source.
+Tech PO-to-Business: a specific request for UX/UI, legal, financial or other business specialist input, including context, deliverable, acceptance criteria, dependencies and approval gate.
+Business-to-Tech PO: specialist findings, business needs and rules, constraints, UX contract, evidence, relevant approvals and open decisions. PO receipt requires actual acknowledgment. PO maintains the canonical contract; Business input or handoff acknowledgment is not Founder approval.
 Tech-to-PM and Business-to-PM: dated status and evidence, forecast and blockers; PM cannot alter owner approvals.

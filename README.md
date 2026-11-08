@@ -8,11 +8,15 @@ A reusable, project-agnostic governance and delivery framework for a Founder, GP
 
 Founder (approves strategic, product, commercial, implementation and release decisions)
 
-- Business Orchestrator (GPT): Product, UX/UI, Marketing, Finance, Accounting & Tax, Legal & Compliance.
-- Tech Orchestrator (Claude): Architecture/SA, Tech Lead function, Development, QA and Security.
+- Business Orchestrator (GPT): UX/UI, Marketing, Finance, Accounting & Tax, Legal & Compliance and business input to Product.
+- Tech Orchestrator (Claude): Product Owner (PO), Architecture/SA, Tech Lead function, Development, QA and Security.
 - PM Agent: reconciles both plans, monitors critical path, dependencies, risks and verified progress. PM is not a third orchestrator and cannot approve or dispatch cross-domain specialists.
 
 Both orchestrators are peers, report to Founder and coordinate via one project's source of truth. The framework repo contains reusable policy only; each **adopting project** owns its own decisions, issues, artifacts and code. Do not place project-specific confidential information in this framework.
+
+Tech PO receives requirements directly from Founder and maintains the canonical product requirements, feature IDs and acceptance criteria. When business specialist input is needed, PO hands off to Business for UX/UI, legal or other relevant work. Founder retains approval of product scope, business decisions, implementation and release; PO ownership does not delegate those approvals.
+
+Business GPT, Tech/PO Claude and PM use the shared [Founder communication template](templates/STATUS_REPORT.md) for work reports and decisions; simple answers remain concise.
 
 ## Quick start
 

@@ -1,12 +1,13 @@
-# Example: Business -> Tech
+# Example: Tech PO -> Business
 
-Sender: Business Orchestrator
-Receiver: Tech Orchestrator
+Sender: Tech Orchestrator / Product Owner
+Receiver: Business Orchestrator
 State: POSTED / AWAITING RECEIVER
 Feature: F-001, merchant onboarding (fictional example)
-Approved contract: LINK_REQUIRED
-Deliverable: feasibility and technical design proposal
-Acceptance: architecture alternatives, risk tier, dependencies and QA strategy
-Approval: design only; implementation NOT APPROVED
+Founder request / source: LINK_REQUIRED
+Product context and proposed contract: LINK_REQUIRED
+Deliverable: UX and legal input on merchant onboarding
+Acceptance: proposed user flow, accessibility considerations, identified legal questions, evidence and open decisions
+Approval: business analysis only; implementation NOT APPROVED
 Receiver acknowledgment: NONE
-Next action: actual Tech session reviews source and acknowledges
+Next action: actual Business session reviews source and acknowledges; PO incorporates returned input and Founder approves decisions as required

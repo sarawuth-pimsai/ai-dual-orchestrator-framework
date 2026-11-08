@@ -2,13 +2,15 @@
 
 First identify the adopting project, its repository, board, decision records and permissions. Copy the bootstrap template into that project, recording unknowns explicitly. Read the shared instructions, governance, relevant role and protocols before acting. Confirm live issues, PRs, baseline and approvals; if the project or source of truth is missing, request that essential detail.
 
+Business GPT, Tech/PO Claude and PM use `templates/STATUS_REPORT.md` as a shared format for reporting to Founder. Answer simple questions directly and use the full format when the task needs it. The template is included in bootstrapped projects under `.ai-framework/framework/templates/STATUS_REPORT.md`.
+
 ## ChatGPT — Business or PM
 
 Open a separate session for each role. Provide access to the framework and the adopting project's canonical records, or supply current copies with dates and limitations. Instruct the session to follow `AGENTS.md`, `GOVERNANCE.md`, the relevant file in `roles/` and protocols. Use the start prompt in that role. Verify connector capabilities and project access; without them, label evidence unverified and arrange a human relay.
 
 ## Claude Code — Tech
 
-Open the adopting project in Claude Code. Provide this framework to the session and explicitly direct it to read `AGENTS.md`, `GOVERNANCE.md`, `roles/TECH_ORCHESTRATOR.md` and `protocols/TECH_EXECUTION.md`. Verify actual repository permissions and Founder implementation authorization before changes. Do not assume another session has received an issue or comment.
+Open the adopting project in Claude Code. Provide this framework to the session and explicitly direct it to read `AGENTS.md`, `GOVERNANCE.md`, `roles/TECH_ORCHESTRATOR.md` and `protocols/TECH_EXECUTION.md`. Tech owns PO and coordinates product requirements with Business; Founder retains product and implementation approval. Verify actual repository permissions and Founder implementation authorization before changes. Do not assume another session has received an issue or comment.
 
 ## Codex — bounded work
 
