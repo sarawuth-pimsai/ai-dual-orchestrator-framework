@@ -55,14 +55,26 @@ Alternatively, use a release tag such as `--version v1.0.0` in place of `--commi
 ./ai-framework framework update . --version v1.1.0 --sha256 TRUSTED_64_CHAR_SHA256
 ```
 
-If neither `--version` nor `--commit` is supplied, the CLI resolves GitHub's latest published release for this public repository, then resolves its tag to a commit. This requires `curl`, Git and network access even when `--archive` is supplied. Check the selected release and commit, and supply the independently trusted SHA-256 of the exact ZIP for that release; a new latest release can require a different digest and archive. For reproducibility or offline use, pin an independently verified `--commit` and use `--archive`.
+If neither `--version` nor `--commit` is supplied, the CLI resolves GitHub's latest published release for this public repository, then resolves its tag to a commit. This requires `curl`, Git and network access even when `--archive` is supplied. For reproducibility or offline use, pin an independently verified `--commit` and use `--archive`.
 
 ```sh
 ./ai-framework init project . --sha256 TRUSTED_LATEST_ZIP_SHA256 --archive /path/to/latest-release.zip
 ./ai-framework framework update . --sha256 TRUSTED_LATEST_ZIP_SHA256 --archive /path/to/latest-release.zip
 ```
 
-This default requires a CLI version that includes it; the previously published `v1.1.0` CLI still requires `--version` or `--commit`.
+For shorter commands, install a trusted copy of the current CLI into a directory on `PATH`, and create `${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework/trusted-releases`. Each line must contain a release tag, its full commit, and the SHA-256 of the exact `framework-TAG.zip` release asset, separated by spaces. Independently authenticate the commit and digest before recording them; do not treat a checksum from the same unverified source as independent authentication. For example, after verifying the values for `v1.1.0`:
+
+```sh
+mkdir -p "$HOME/.local/bin" "${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework"
+cp /path/to/trusted/ai-framework "$HOME/.local/bin/ai-framework"
+chmod +x "$HOME/.local/bin/ai-framework"
+export PATH="$HOME/.local/bin:$PATH"
+printf '%s\n' 'v1.1.0 3685cb76c8c2c71679ab7b809702a8799ff379ab 7fccbeff9b3e11906b2083049334485b903fc002bc29bc224002d4e9fdcbab37' >> "${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework/trusted-releases"
+```
+
+Add the PATH setting to your shell configuration if needed. Add only one entry per release. You can then run `ai-framework init project .` or `ai-framework framework update .`; the CLI checks the resolved tag against the recorded commit, downloads the named release ZIP and checks its digest. If a newer release has no trusted entry, the CLI stops without modifying the project until its commit and digest are independently verified and added. If specifying `--archive` without `--sha256`, it must match the trusted release asset bytes. You can use `AI_FRAMEWORK_TRUST_FILE` to choose a different trust file. Direct `--commit` use still requires `--sha256`.
+
+The previously published `v1.1.0` CLI does not support the latest-release default or the trust file; these require the newer CLI.
 
 `init` refuses existing managed paths and is safe to repeat with identical files. Move or reconcile existing instructions yourself before initialization; the tool never silently overwrites them. Update checks configuration compatibility and managed file hashes, shows a diff, and requires the operator to type `yes`. Local edits to managed files block updates and must be reconciled first. To restore an earlier version, run `framework update` with its previous commit and trusted archive digest, review the diff and confirm. Keep the older archive if GitHub serves different ZIP bytes later. Save a project backup or use version control before updating: normal write errors trigger rollback, but an interruption or machine failure may require manual recovery.
 

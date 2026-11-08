@@ -3,7 +3,7 @@
 set -eu
 fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 hash() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | awk '{print $1}'; else shasum -a 256 "$1" | awk '{print $1}'; fi; }
-usage() { printf '%s\n' 'Usage: ai-framework init project DIR [--commit SHA | --version TAG] --sha256 DIGEST [--archive ZIP]' '       ai-framework framework update DIR [--commit SHA | --version TAG] --sha256 DIGEST [--archive ZIP]' '       Defaults to the latest published GitHub release when no commit or version is specified.'; }
+usage() { printf '%s\n' 'Usage: ai-framework init project DIR [--commit SHA | --version TAG] [--sha256 DIGEST] [--archive ZIP]' '       ai-framework framework update DIR [--commit SHA | --version TAG] [--sha256 DIGEST] [--archive ZIP]' '       Defaults to the latest release; without --sha256 an independently verified trust file is required.'; }
 [ "$#" -ge 3 ] || { usage >&2; exit 1; }
 case "$1 $2" in 'init project') action=init ;; 'framework update') action=update ;; *) usage >&2; exit 1 ;; esac
 project=$3; shift 3
@@ -13,7 +13,6 @@ while [ "$#" -gt 0 ]; do
   case "$1" in --commit) commit=$2 ;; --version) version=$2 ;; --sha256) sha=$2 ;; --archive) archive=$2 ;; *) fail "unknown option: $1" ;; esac
   shift 2
 done
-[[ "$sha" =~ ^[0-9a-f]{64}$ ]] || fail 'SHA-256 must be 64 lowercase hexadecimal characters'
 [ -z "$version" ] || [ -z "$commit" ] || fail 'choose either --commit or --version'
 if [ -z "$version" ] && [ -z "$commit" ]; then
   command -v curl >/dev/null 2>&1 || fail 'curl is required to resolve the latest release'
@@ -29,6 +28,18 @@ if [ -n "$version" ]; then
   [ -n "$commit" ] || fail 'version tag not found'
 fi
 [[ "$commit" =~ ^[0-9a-f]{40}$ ]] || fail 'commit must be 40 lowercase hexadecimal characters'
+release_asset=0
+if [ -z "$sha" ]; then
+  [ -n "$version" ] || fail '--sha256 is required with --commit'
+  trust_file=${AI_FRAMEWORK_TRUST_FILE:-${XDG_CONFIG_HOME:-${HOME:?HOME is required}/.config}/ai-framework/trusted-releases}
+  [ -f "$trust_file" ] && [ ! -L "$trust_file" ] || fail "trusted release file missing: $trust_file; see README"
+  trusted=$(awk -v v="$version" '$1 == v { count++; if (NF == 3) value=$2 " " $3 } END { if (count == 1) print value }' "$trust_file")
+  [ -n "$trusted" ] || fail "missing or duplicate trusted entry for $version in $trust_file"
+  read -r trusted_commit sha <<< "$trusted"
+  [[ "$trusted_commit" =~ ^[0-9a-f]{40}$ ]] && [ "$trusted_commit" = "$commit" ] || fail 'release tag does not match the independently trusted commit'
+  release_asset=1
+fi
+[[ "$sha" =~ ^[0-9a-f]{64}$ ]] || fail 'SHA-256 must be 64 lowercase hexadecimal characters'
 [ ! -L "$project" ] || fail 'project is a symlink'
 [ ! -e "$project" ] || [ -d "$project" ] || fail 'project is not a directory'
 for cmd in unzip awk diff mktemp; do command -v "$cmd" >/dev/null 2>&1 || fail "missing required command: $cmd"; done
@@ -43,7 +54,11 @@ if [ -n "$archive" ]; then
   cp -- "$archive" "$tmp/archive.zip"
 else
   command -v curl >/dev/null 2>&1 || fail 'curl is required for downloads'
-  url="https://api.github.com/repos/sarawuth-pimsai/ai-dual-orchestrator-framework/zipball/$commit"
+  if [ "$release_asset" = 1 ]; then
+    url="https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/download/$version/framework-$version.zip"
+  else
+    url="https://api.github.com/repos/sarawuth-pimsai/ai-dual-orchestrator-framework/zipball/$commit"
+  fi
   # Keep credentials out of process arguments; curl reads the header from a private config file.
   if [ -n "${GITHUB_TOKEN:-}" ]; then
     case "$GITHUB_TOKEN" in *[!a-zA-Z0-9_]*) fail 'invalid characters in GITHUB_TOKEN' ;; esac

@@ -23,6 +23,10 @@ EOF
 chmod +x "$tmp/tagbin/git"
 cat > "$tmp/tagbin/curl" <<'EOF'
 #!/usr/bin/env bash
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = -o ]; then cp "$TEST_RELEASE_ZIP" "$2"; exit; fi
+  shift
+done
 printf '%s' "${TEST_LATEST_URL:-https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/tag/v1.0.0}"
 EOF
 chmod +x "$tmp/tagbin/curl"
@@ -33,6 +37,16 @@ PATH="$tmp/tagbin:$PATH" run init project "$tmp/latest" --sha256 "$h1" --archive
 run init project "$tmp/latest-update" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip"
 printf 'yes\n' | PATH="$tmp/tagbin:$PATH" run framework update "$tmp/latest-update" --sha256 "$h1" --archive "$tmp/one.zip"
 [ "$(cat "$tmp/latest-update/.ai-framework/VERSION")" = "$c1" ]
+printf 'v1.0.0 %s %s\n' "$c1" "$h1" > "$tmp/trusted-releases"
+AI_FRAMEWORK_TRUST_FILE="$tmp/trusted-releases" TEST_RELEASE_ZIP="$tmp/one.zip" PATH="$tmp/tagbin:$PATH" run init project "$tmp/simple"
+[ "$(cat "$tmp/simple/.ai-framework/VERSION")" = "$c1" ]
+if AI_FRAMEWORK_TRUST_FILE="$tmp/missing-trust" PATH="$tmp/tagbin:$PATH" run init project "$tmp/untrusted" 2>/dev/null; then exit 1; fi
+[ ! -e "$tmp/untrusted" ]
+printf 'v1.0.0 %s %s\n' "$c2" "$h1" > "$tmp/wrong-trust"
+if AI_FRAMEWORK_TRUST_FILE="$tmp/wrong-trust" PATH="$tmp/tagbin:$PATH" run init project "$tmp/wrong-tag" 2>/dev/null; then exit 1; fi
+[ ! -e "$tmp/wrong-tag" ]
+if AI_FRAMEWORK_TRUST_FILE="$tmp/trusted-releases" TEST_RELEASE_ZIP="$tmp/two.zip" PATH="$tmp/tagbin:$PATH" run init project "$tmp/wrong-asset" 2>/dev/null; then exit 1; fi
+[ ! -e "$tmp/wrong-asset" ]
 if TEST_LATEST_URL=https://example.com/tag/v1.0.0 PATH="$tmp/tagbin:$PATH" run init project "$tmp/badlatest" --sha256 "$h1" --archive "$tmp/one.zip" 2>/dev/null; then exit 1; fi
 [ ! -e "$tmp/badlatest" ]
 if PATH="$tmp/tagbin:$PATH" run init project "$tmp/latest-wrong" --sha256 "$(printf '%064d' 0)" --archive "$tmp/one.zip" 2>/dev/null; then exit 1; fi
