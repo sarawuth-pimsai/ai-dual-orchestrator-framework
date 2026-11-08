@@ -24,7 +24,7 @@ Both orchestrators are peers, report to Founder and coordinate via one project's
 
 ## Bootstrap CLI
 
-The shell CLI installs project entry points and a fixed subset of the framework documents without a submodule, Python, or a framework clone inside the project. It needs Bash, `unzip`, `curl` for downloads, `sha256sum` or `shasum`, and standard Unix utilities. macOS and Linux are supported when these tools are present; native Windows requires a compatible Unix environment. Obtain `bin/ai-framework` from a trusted copy of this repository and run `chmod +x ai-framework`. It is a local tool, not an agent runtime. The existing all-rights-reserved license applies.
+The shell CLI installs project entry points and a fixed subset of the framework documents without a submodule, Python, or a framework clone inside the project. It needs Bash, `unzip`, `curl` for downloads, `sha256sum` or `shasum`, and standard Unix utilities. macOS and Linux are supported when these tools are present; native Windows requires a compatible Unix environment. Obtain `bin/ai-framework` from a trusted copy of this repository and run `chmod +x ai-framework`. It is a local tool, not an agent runtime. See [LICENSE](LICENSE) for usage terms.
 
 Obtain a full 40-character framework commit and the SHA-256 of the **exact ZIP archive** through a trusted channel. For a private GitHub repository set `GITHUB_TOKEN` to a token with repository read access; keep it out of shell history and project files. The CLI fetches the commit-specific GitHub ZIP over HTTPS, or use `--archive /path/to/framework.zip` for a previously downloaded archive. The supplied digest must match the exact ZIP bytes. Do not trust a checksum obtained solely from the same unverified source as the archive.
 
@@ -66,3 +66,7 @@ Troubleshooting: a 404 or authentication error requires verified private-reposit
 ## Integration boundaries
 
 This framework is compatible with ChatGPT, Claude Code and Codex as **instructions**. It does not automatically transfer conversations between providers, spawn agents, connect GitHub Projects, or run unattended. Verify permissions and runtime capabilities before claiming any operation.
+
+## License
+
+This repository uses the [Business Source License 1.1](LICENSE), with the same terms as the SDLC Playbook. The license permits free internal production and operation, and restricts commercial managed services and embedding and sublicensing in commercial proprietary products sold to third parties. The license specifies July 17, 2029 as the Change Date. Consult the full license for its terms and conditions; for commercial licensing, contact Sarawuth Pimsai through [GitHub Issues](https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/issues).
