@@ -21,6 +21,44 @@
 
 ตรวจสอบว่าอยู่ใน **โปรเจกต์ที่ต้องการติดตั้ง** และสำรองงานหรือ commit งานเดิมก่อน หากโปรเจกต์มี `AGENTS.md`, `CLAUDE.md` หรือไฟล์ managed อยู่แล้ว `init` จะปฏิเสธเมื่อเนื้อหาไม่ตรงกัน ให้ตรวจและจัดการด้วยตนเองก่อน ไม่เขียนทับโดยอัตโนมัติ
 
+### ตั้งค่าเพื่อใช้คำสั่งสั้นจากทุกโปรเจกต์
+
+CLI ที่รองรับคำสั่งสั้นอยู่บน `main` ที่ commit `3054febd0fb5f660ad2d784c2fc41303acaff70b` และยังไม่ได้ออก release ใหม่ ตัวอย่างนี้ติดตั้งเฉพาะ CLI ใน `~/.local/bin`; ตรวจไฟล์เดิมก่อน เพราะคำสั่ง `cp` จะเขียนทับชื่อเดียวกัน
+
+```sh
+mkdir -p "$HOME/ai-framework-releases/cli-3054feb"
+curl -fL https://raw.githubusercontent.com/sarawuth-pimsai/ai-dual-orchestrator-framework/3054febd0fb5f660ad2d784c2fc41303acaff70b/bin/ai-framework -o "$HOME/ai-framework-releases/cli-3054feb/ai-framework"
+shasum -a 256 "$HOME/ai-framework-releases/cli-3054feb/ai-framework"
+```
+
+ค่า SHA-256 ของ CLI ตาม commit ตัวอย่างคือ `3a17502acf9b3c11af768373670dd9acd40649474b143c4141ebd8cfd2ec7b7f` ให้ยืนยัน commit และ hash ผ่านช่องทางที่เชื่อถือได้แยกจากแหล่งดาวน์โหลดก่อนติดตั้ง จากนั้น:
+
+```sh
+mkdir -p "$HOME/.local/bin" "${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework"
+cp "$HOME/ai-framework-releases/cli-3054feb/ai-framework" "$HOME/.local/bin/ai-framework"
+chmod +x "$HOME/.local/bin/ai-framework"
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+`export` มีผลกับ shell ปัจจุบัน หากต้องการใช้ใน shell ใหม่ ให้เพิ่ม `export PATH="$HOME/.local/bin:$PATH"` ในไฟล์ตั้งค่า shell ของคุณ เช่น `~/.zshrc` แล้วเปิด shell ใหม่
+
+เปิดไฟล์ `${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework/trusted-releases` ด้วย editor และเพิ่ม **หนึ่งบรรทัดต่อหนึ่ง release** หลังตรวจสอบ tag, commit และ SHA-256 ของไฟล์ ZIP release ผ่านช่องทางที่เชื่อถือได้แยกจากแหล่งดาวน์โหลด ตัวอย่างสำหรับ `v1.1.0`:
+
+```text
+v1.1.0 3685cb76c8c2c71679ab7b809702a8799ff379ab 7fccbeff9b3e11906b2083049334485b903fc002bc29bc224002d4e9fdcbab37
+```
+
+จากนั้นใช้จากโฟลเดอร์โปรเจกต์ได้:
+
+```sh
+cd /path/to/your-project
+ai-framework init project .
+```
+
+CLI จะเลือก GitHub release ล่าสุด ตรวจ commit กับ trust file และดาวน์โหลด ZIP ของ release เพื่อตรวจ checksum หาก release ล่าสุดยังไม่มีรายการที่ยืนยันแล้ว ให้ตรวจสอบและเพิ่มรายการใหม่ก่อน โดยไม่แก้โปรเจกต์โดยอัตโนมัติ การเลือก release ล่าสุดต้องใช้อินเทอร์เน็ต; สำหรับ offline ให้ใช้ `--commit`, `--sha256` และ `--archive` ดูรายละเอียดใน [README](README.md#bootstrap-cli)
+
+### ทางเลือก: ระบุเวอร์ชันและ ZIP ด้วยตนเอง
+
 ดาวน์โหลดไฟล์ release ไปไว้ในโฟลเดอร์แยก แล้วตรวจสอบ commit และ checksum จากช่องทางที่เชื่อถือได้แยกจากแหล่งดาวน์โหลด:
 
 ```sh
@@ -39,13 +77,7 @@ framework-v1.1.0.zip   7fccbeff9b3e11906b2083049334485b903fc002bc29bc224002d4e9f
 
 เทียบ hash ของ CLI และ ZIP ก่อนรัน CLI ค่าที่เผยแพร่พร้อมไฟล์ช่วยตรวจความตรงกัน แต่เพียงอย่างเดียวไม่ใช่การยืนยันแหล่งที่มาอย่างอิสระ Tag สามารถถูกเปลี่ยนให้ชี้ commit อื่นได้ และการตรวจ ZIP hash ไม่ได้พิสูจน์ว่า ZIP ในเครื่องมาจาก commit ที่ระบุ
 
-CLI ที่มีการปรับปรุงหลัง `v1.1.0` สามารถเลือก release ล่าสุดและอ่าน commit กับ SHA-256 ที่ยืนยันแล้วจาก trust file ในเครื่องได้ จึงเรียก `ai-framework init project .` ได้หลังตั้งค่า CLI ใน PATH และ trust file ครั้งแรก ดูขั้นตอนใน [README](README.md#bootstrap-cli) ต้องเพิ่มข้อมูลที่ตรวจสอบอย่างอิสระสำหรับแต่ละ release ใหม่ก่อนใช้งาน หากยังไม่มีข้อมูลที่เชื่อถือได้ CLI จะหยุดโดยไม่แก้โปรเจกต์ ใช้ Git, curl และอินเทอร์เน็ตในการเลือก release แม้ใช้ `--archive`; หากต้องการ pin หรือใช้งาน offline ให้ระบุ `--commit` เต็ม, `--sha256` และ `--archive`
-
-```sh
-ai-framework init project .
-```
-
-ตัวอย่างนี้สมมติว่า CLI รุ่นใหม่อยู่ใน `PATH` และตั้ง trust file แล้ว CLI จาก release `v1.1.0` ด้านล่างยังไม่รองรับคำสั่งสั้นนี้
+CLI จาก release `v1.1.0` ในตัวอย่างนี้ยังไม่รองรับคำสั่งสั้น จึงต้องระบุ version และ checksum:
 
 ```sh
 chmod +x "$HOME/ai-framework-releases/v1.1.0/ai-framework"

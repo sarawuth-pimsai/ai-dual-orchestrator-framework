@@ -62,17 +62,22 @@ If neither `--version` nor `--commit` is supplied, the CLI resolves GitHub's lat
 ./ai-framework framework update . --sha256 TRUSTED_LATEST_ZIP_SHA256 --archive /path/to/latest-release.zip
 ```
 
-For shorter commands, install a trusted copy of the current CLI into a directory on `PATH`, and create `${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework/trusted-releases`. Each line must contain a release tag, its full commit, and the SHA-256 of the exact `framework-TAG.zip` release asset, separated by spaces. Independently authenticate the commit and digest before recording them; do not treat a checksum from the same unverified source as independent authentication. For example, after verifying the values for `v1.1.0`:
+For shorter commands, install a trusted copy of the current CLI into a directory on `PATH`, and create `${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework/trusted-releases`. Each line must contain a release tag, its full commit, and the SHA-256 of the exact `framework-TAG.zip` release asset, separated by spaces. Independently authenticate the commit and digest before recording them; do not treat a checksum from the same unverified source as independent authentication. See the [Thai guide](GUIDE.th.md) for a complete CLI download and setup example. Before the following example, check for an existing CLI because `cp` overwrites it; after verifying the values for `v1.1.0`:
 
 ```sh
 mkdir -p "$HOME/.local/bin" "${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework"
 cp /path/to/trusted/ai-framework "$HOME/.local/bin/ai-framework"
 chmod +x "$HOME/.local/bin/ai-framework"
 export PATH="$HOME/.local/bin:$PATH"
-printf '%s\n' 'v1.1.0 3685cb76c8c2c71679ab7b809702a8799ff379ab 7fccbeff9b3e11906b2083049334485b903fc002bc29bc224002d4e9fdcbab37' >> "${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework/trusted-releases"
 ```
 
-Add the PATH setting to your shell configuration if needed. Add only one entry per release. You can then run `ai-framework init project .` or `ai-framework framework update .`; the CLI checks the resolved tag against the recorded commit, downloads the named release ZIP and checks its digest. If a newer release has no trusted entry, the CLI stops without modifying the project until its commit and digest are independently verified and added. If specifying `--archive` without `--sha256`, it must match the trusted release asset bytes. You can use `AI_FRAMEWORK_TRUST_FILE` to choose a different trust file. Direct `--commit` use still requires `--sha256`.
+Add the PATH setting to your shell configuration if needed. Use an editor to add the following line to the trust file, preserving existing entries and adding only one entry per release:
+
+```text
+v1.1.0 3685cb76c8c2c71679ab7b809702a8799ff379ab 7fccbeff9b3e11906b2083049334485b903fc002bc29bc224002d4e9fdcbab37
+```
+
+You can then run `ai-framework init project .` or `ai-framework framework update .`; the CLI checks the resolved tag against the recorded commit, downloads the named release ZIP and checks its digest. If a newer release has no trusted entry, the CLI stops without modifying the project until its commit and digest are independently verified and added. If specifying `--archive` without `--sha256`, it must match the trusted release asset bytes. You can use `AI_FRAMEWORK_TRUST_FILE` to choose a different trust file. Direct `--commit` use still requires `--sha256`.
 
 The previously published `v1.1.0` CLI does not support the latest-release default or the trust file; these require the newer CLI.
 
