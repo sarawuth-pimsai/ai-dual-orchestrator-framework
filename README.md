@@ -55,6 +55,15 @@ Alternatively, use a release tag such as `--version v1.0.0` in place of `--commi
 ./ai-framework framework update . --version v1.1.0 --sha256 TRUSTED_64_CHAR_SHA256
 ```
 
+If neither `--version` nor `--commit` is supplied, the CLI resolves GitHub's latest published release for this public repository, then resolves its tag to a commit. This requires `curl`, Git and network access even when `--archive` is supplied. Check the selected release and commit, and supply the independently trusted SHA-256 of the exact ZIP for that release; a new latest release can require a different digest and archive. For reproducibility or offline use, pin an independently verified `--commit` and use `--archive`.
+
+```sh
+./ai-framework init project . --sha256 TRUSTED_LATEST_ZIP_SHA256 --archive /path/to/latest-release.zip
+./ai-framework framework update . --sha256 TRUSTED_LATEST_ZIP_SHA256 --archive /path/to/latest-release.zip
+```
+
+This default requires a CLI version that includes it; the previously published `v1.1.0` CLI still requires `--version` or `--commit`.
+
 `init` refuses existing managed paths and is safe to repeat with identical files. Move or reconcile existing instructions yourself before initialization; the tool never silently overwrites them. Update checks configuration compatibility and managed file hashes, shows a diff, and requires the operator to type `yes`. Local edits to managed files block updates and must be reconciled first. To restore an earlier version, run `framework update` with its previous commit and trusted archive digest, review the diff and confirm. Keep the older archive if GitHub serves different ZIP bytes later. Save a project backup or use version control before updating: normal write errors trigger rollback, but an interruption or machine failure may require manual recovery.
 
 The generated `AGENTS.md` and `CLAUDE.md` point to `.ai-framework/framework/`; the project owns its own context, decisions and handoffs. `.ai-framework/config.yaml` records schema 2 and the pin, `.ai-framework/MANIFEST` tracks managed file hashes, and `.ai-framework/VERSION` records the commit. Commit these files as appropriate for the project. The archive digest verifies bytes against the independently supplied digest; it does not prove an arbitrary local ZIP corresponds to the stated Git commit. See `ARCHITECTURE_BOOTSTRAP.md` for security and recovery limitations.

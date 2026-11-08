@@ -3,7 +3,7 @@
 set -eu
 fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 hash() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | awk '{print $1}'; else shasum -a 256 "$1" | awk '{print $1}'; fi; }
-usage() { printf '%s\n' 'Usage: ai-framework init project DIR (--commit SHA | --version TAG) --sha256 DIGEST [--archive ZIP]' '       ai-framework framework update DIR (--commit SHA | --version TAG) --sha256 DIGEST [--archive ZIP]'; }
+usage() { printf '%s\n' 'Usage: ai-framework init project DIR [--commit SHA | --version TAG] --sha256 DIGEST [--archive ZIP]' '       ai-framework framework update DIR [--commit SHA | --version TAG] --sha256 DIGEST [--archive ZIP]' '       Defaults to the latest published GitHub release when no commit or version is specified.'; }
 [ "$#" -ge 3 ] || { usage >&2; exit 1; }
 case "$1 $2" in 'init project') action=init ;; 'framework update') action=update ;; *) usage >&2; exit 1 ;; esac
 project=$3; shift 3
@@ -15,6 +15,12 @@ while [ "$#" -gt 0 ]; do
 done
 [[ "$sha" =~ ^[0-9a-f]{64}$ ]] || fail 'SHA-256 must be 64 lowercase hexadecimal characters'
 [ -z "$version" ] || [ -z "$commit" ] || fail 'choose either --commit or --version'
+if [ -z "$version" ] && [ -z "$commit" ]; then
+  command -v curl >/dev/null 2>&1 || fail 'curl is required to resolve the latest release'
+  latest_url=$(curl --fail --silent --show-error --location --proto-redir '=https' --max-time 60 --output /dev/null --write-out '%{url_effective}' 'https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/latest') || fail 'cannot resolve latest release'
+  case "$latest_url" in https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/tag/*) version=${latest_url##*/} ;; *) fail 'unexpected latest release URL' ;; esac
+  printf 'Latest release: %s\n' "$version" >&2
+fi
 if [ -n "$version" ]; then
   [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || fail 'version must be a release tag such as v1.0.0'
   command -v git >/dev/null 2>&1 || fail 'git is required to resolve a version'

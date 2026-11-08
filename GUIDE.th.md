@@ -39,6 +39,14 @@ framework-v1.1.0.zip   7fccbeff9b3e11906b2083049334485b903fc002bc29bc224002d4e9f
 
 เทียบ hash ของ CLI และ ZIP ก่อนรัน CLI ค่าที่เผยแพร่พร้อมไฟล์ช่วยตรวจความตรงกัน แต่เพียงอย่างเดียวไม่ใช่การยืนยันแหล่งที่มาอย่างอิสระ Tag สามารถถูกเปลี่ยนให้ชี้ commit อื่นได้ และการตรวจ ZIP hash ไม่ได้พิสูจน์ว่า ZIP ในเครื่องมาจาก commit ที่ระบุ
 
+CLI ที่มีการปรับปรุงหลัง `v1.1.0` สามารถละ `--version` และ `--commit` เพื่อเลือก GitHub release ล่าสุดได้ แต่ยังต้องระบุ `--sha256` ของ ZIP ที่ตรงกับ release ล่าสุดและตรวจสอบจากช่องทางที่เชื่อถือได้ ใช้ Git, curl และอินเทอร์เน็ตในการเลือก release แม้ใช้ `--archive`; หาก release ล่าสุดเปลี่ยน checksum และ ZIP ก็อาจต้องเปลี่ยนด้วย CLI ใน release `v1.1.0` ที่ใช้ในตัวอย่างด้านล่างยังต้องระบุ `--version` หรือ `--commit` หากต้องการ pin หรือใช้งาน offline ให้ระบุ `--commit` เต็มและ `--archive`
+
+```sh
+ai-framework init project . --sha256 TRUSTED_LATEST_ZIP_SHA256 --archive /path/to/latest-release.zip
+```
+
+ตัวอย่างนี้สมมติว่า CLI รุ่นใหม่อยู่ใน `PATH` แล้ว; การเปลี่ยน default ไม่ได้ติดตั้ง CLI ลง `PATH` โดยอัตโนมัติ
+
 ```sh
 chmod +x "$HOME/ai-framework-releases/v1.1.0/ai-framework"
 cd /path/to/your-project
