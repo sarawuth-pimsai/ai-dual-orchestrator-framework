@@ -4,6 +4,17 @@ A reusable, project-agnostic governance and delivery framework for a Founder, GP
 
 **Status:** Initial reusable framework template; no agent runtime, scheduler, external integrations or autonomous execution is installed by these files.
 
+**[คู่มือการใช้งานภาษาไทย](GUIDE.th.md)** · [Starting sessions](USAGE.md) · [Releases](https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases) · [Governance](GOVERNANCE.md)
+
+## How it works
+
+1. Founder gives requirements directly to Tech/PO in Claude.
+2. Tech/PO clarifies requirements and requests Business/GPT input when UX, legal, finance or other business expertise is needed.
+3. Founder approves product decisions and the implementation scope. Tech coordinates authorized delivery, QA and evidence.
+4. Business and Tech report using a shared template, including copy-ready handoffs and PR actions when relevant. Founder decides release.
+
+Business and Tech are separate sessions. Unless an integration is actually configured, the Founder relays handoffs and the receiver must acknowledge them; an issue comment alone does not dispatch an agent.
+
 ## Topology
 
 Founder (approves strategic, product, commercial, implementation and release decisions)
@@ -20,11 +31,11 @@ Business GPT, Tech/PO Claude and PM use the shared [Founder communication templa
 
 ## Quick start
 
-1. Make this framework available to each session. Keep it separate from each adopting project.
-2. For each adopting project, copy `templates/PROJECT_BOOTSTRAP.md`, `templates/DECISION_RECORD.md`, `templates/TASK_CONTRACT.md`, `templates/HANDOFF.md`, `templates/STATUS_REPORT.md`, and `templates/RISK_REGISTER.md` as needed.
-3. Set a single project source of truth and configure actual GitHub/IDE access for each role.
-4. Open separate GPT Business, Claude Tech and PM sessions, using the prompts in `roles/`.
-5. Start with discovery and evidence-based planning; implementation requires explicit Founder authorization.
+1. Download the CLI and exact ZIP for a [release](https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases) and independently verify their checksums and commit. Install them into the **adopting project**, not this framework repository. See the [Thai guide](GUIDE.th.md#2-ติดตั้งในโปรเจกต์ใหม่) for complete commands.
+2. Copy `.ai-framework/framework/templates/PROJECT_BOOTSTRAP.md` to a project-owned location and record the canonical repository, board, decision records and access. Keep project-specific context outside managed framework files.
+3. Open Claude Code in the project and start the Tech role using `.ai-framework/framework/roles/TECH_ORCHESTRATOR.md`. Give PO your requirements; implementation requires explicit Founder authorization.
+4. Open a separate GPT Business session when needed. Relay handoffs and require real receiver acknowledgment. Use a separate PM session if integrated tracking is needed.
+5. Review evidence, approvals and PR readiness; approve release separately. See [Starting sessions](USAGE.md) and the [Thai guide](GUIDE.th.md) for prompts and examples.
 
 ## Bootstrap CLI
 
@@ -65,6 +76,7 @@ Troubleshooting: a 404 or authentication error requires verified private-reposit
 - `protocols/`: technical execution, handoff and tracking protocols.
 - `templates/`: reusable project documents.
 - `USAGE.md`: session startup for ChatGPT, Claude Code and Codex.
+- `GUIDE.th.md`: Thai installation, workflow, handoff, PR and update guide (read from this repository; not included in the bootstrap-managed document set).
 - `examples/`: example handoff and fictional workflow dry-run.
 
 ## Integration boundaries
