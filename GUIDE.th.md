@@ -1,6 +1,6 @@
 # คู่มือใช้งาน AI Dual-Orchestrator Framework
 
-คู่มือนี้อธิบายการติดตั้งและใช้งาน framework กับโปรเจกต์ของคุณ โดยใช้ release `v1.1.0` เป็นตัวอย่าง Framework เป็นชุดคำแนะนำและเอกสาร ไม่ใช่ระบบที่เปิด agent หรือส่งงานระหว่าง GPT กับ Claude ให้อัตโนมัติ
+คู่มือนี้อธิบายการติดตั้งและใช้งาน framework กับโปรเจกต์ของคุณ โดยใช้ release `v1.4.0` เป็นตัวอย่าง Framework เป็นชุดคำแนะนำและเอกสาร ไม่ใช่ระบบที่เปิด agent หรือส่งงานระหว่าง GPT กับ Claude ให้อัตโนมัติ
 
 ## 1. บทบาทและลำดับการทำงาน
 
@@ -23,29 +23,29 @@
 
 ### ตั้งค่าเพื่อใช้คำสั่งสั้นจากทุกโปรเจกต์
 
-ตัวอย่างนี้ใช้ CLI ที่รองรับคำสั่งสั้นจาก commit `3054febd0fb5f660ad2d784c2fc41303acaff70b` และติดตั้งเฉพาะ CLI ใน `~/.local/bin` ตรวจไฟล์เดิมก่อน เพราะคำสั่ง `cp` จะเขียนทับชื่อเดียวกัน ตรวจ [Releases](https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases) สำหรับ CLI รุ่นเผยแพร่ล่าสุดด้วย
+ตัวอย่างนี้ใช้ CLI จาก release `v1.4.0` และติดตั้งเฉพาะ CLI ใน `~/.local/bin` ตรวจไฟล์เดิมก่อน เพราะคำสั่ง `cp` จะเขียนทับชื่อเดียวกัน ตรวจ [Releases](https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases) สำหรับ CLI รุ่นเผยแพร่ล่าสุดด้วย
 
 ```sh
-mkdir -p "$HOME/ai-framework-releases/cli-3054feb"
-curl -fL https://raw.githubusercontent.com/sarawuth-pimsai/ai-dual-orchestrator-framework/3054febd0fb5f660ad2d784c2fc41303acaff70b/bin/ai-framework -o "$HOME/ai-framework-releases/cli-3054feb/ai-framework"
-shasum -a 256 "$HOME/ai-framework-releases/cli-3054feb/ai-framework"
+mkdir -p "$HOME/ai-framework-releases/v1.4.0"
+curl -fL https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/download/v1.4.0/ai-framework -o "$HOME/ai-framework-releases/v1.4.0/ai-framework"
+shasum -a 256 "$HOME/ai-framework-releases/v1.4.0/ai-framework"
 ```
 
-ค่า SHA-256 ของ CLI ตาม commit ตัวอย่างคือ `3a17502acf9b3c11af768373670dd9acd40649474b143c4141ebd8cfd2ec7b7f` ให้ยืนยัน commit และ hash ผ่านช่องทางที่เชื่อถือได้แยกจากแหล่งดาวน์โหลดก่อนติดตั้ง จากนั้น:
+ค่า SHA-256 ของ CLI ใน release ตัวอย่างคือ `71f944a94f533a2521879d8f44da5ae8de3e6cca08fab6d5923e183f10f127da` ให้ยืนยัน commit และ hash ผ่านช่องทางที่เชื่อถือได้แยกจากแหล่งดาวน์โหลดก่อนติดตั้ง จากนั้น:
 
 ```sh
 mkdir -p "$HOME/.local/bin" "${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework"
-cp "$HOME/ai-framework-releases/cli-3054feb/ai-framework" "$HOME/.local/bin/ai-framework"
+cp "$HOME/ai-framework-releases/v1.4.0/ai-framework" "$HOME/.local/bin/ai-framework"
 chmod +x "$HOME/.local/bin/ai-framework"
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
 `export` มีผลกับ shell ปัจจุบัน หากต้องการใช้ใน shell ใหม่ ให้เพิ่ม `export PATH="$HOME/.local/bin:$PATH"` ในไฟล์ตั้งค่า shell ของคุณ เช่น `~/.zshrc` แล้วเปิด shell ใหม่
 
-เปิดไฟล์ `${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework/trusted-releases` ด้วย editor และเพิ่ม **หนึ่งบรรทัดต่อหนึ่ง release** หลังตรวจสอบ tag, commit และ SHA-256 ของไฟล์ ZIP release ผ่านช่องทางที่เชื่อถือได้แยกจากแหล่งดาวน์โหลด ตัวอย่างสำหรับ `v1.1.0`:
+เปิดไฟล์ `${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework/trusted-releases` ด้วย editor และเพิ่ม **หนึ่งบรรทัดต่อหนึ่ง release** หลังตรวจสอบ tag, commit และ SHA-256 ของไฟล์ ZIP release ผ่านช่องทางที่เชื่อถือได้แยกจากแหล่งดาวน์โหลด ตัวอย่างสำหรับ `v1.4.0`:
 
 ```text
-v1.1.0 3685cb76c8c2c71679ab7b809702a8799ff379ab 7fccbeff9b3e11906b2083049334485b903fc002bc29bc224002d4e9fdcbab37
+v1.4.0 7d060f675edf8146647718f93c55db59a8e30821 d86da42febba05390ea6c408d58f61a3ccbf69e907e5376902502d6dbac2f987
 ```
 
 จากนั้นใช้จากโฟลเดอร์โปรเจกต์ได้:
@@ -62,30 +62,30 @@ CLI จะเลือก GitHub release ล่าสุด ตรวจ commit 
 ดาวน์โหลดไฟล์ release ไปไว้ในโฟลเดอร์แยก แล้วตรวจสอบ commit และ checksum จากช่องทางที่เชื่อถือได้แยกจากแหล่งดาวน์โหลด:
 
 ```sh
-mkdir -p "$HOME/ai-framework-releases/v1.1.0"
-curl -fL https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/download/v1.1.0/ai-framework -o "$HOME/ai-framework-releases/v1.1.0/ai-framework"
-curl -fL https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/download/v1.1.0/framework-v1.1.0.zip -o "$HOME/ai-framework-releases/v1.1.0/framework-v1.1.0.zip"
-shasum -a 256 "$HOME/ai-framework-releases/v1.1.0/ai-framework" "$HOME/ai-framework-releases/v1.1.0/framework-v1.1.0.zip"
+mkdir -p "$HOME/ai-framework-releases/v1.4.0"
+curl -fL https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/download/v1.4.0/ai-framework -o "$HOME/ai-framework-releases/v1.4.0/ai-framework"
+curl -fL https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/download/v1.4.0/framework-v1.4.0.zip -o "$HOME/ai-framework-releases/v1.4.0/framework-v1.4.0.zip"
+shasum -a 256 "$HOME/ai-framework-releases/v1.4.0/ai-framework" "$HOME/ai-framework-releases/v1.4.0/framework-v1.4.0.zip"
 ```
 
 ค่า SHA-256 สำหรับตัวอย่างนี้:
 
 ```text
-ai-framework           607db2ca55daec2299b6900d4d1eb272ca0f0a396c9fb751952d9319d4267d10
-framework-v1.1.0.zip   7fccbeff9b3e11906b2083049334485b903fc002bc29bc224002d4e9fdcbab37
+ai-framework           71f944a94f533a2521879d8f44da5ae8de3e6cca08fab6d5923e183f10f127da
+framework-v1.4.0.zip   d86da42febba05390ea6c408d58f61a3ccbf69e907e5376902502d6dbac2f987
 ```
 
 เทียบ hash ของ CLI และ ZIP ก่อนรัน CLI ค่าที่เผยแพร่พร้อมไฟล์ช่วยตรวจความตรงกัน แต่เพียงอย่างเดียวไม่ใช่การยืนยันแหล่งที่มาอย่างอิสระ Tag สามารถถูกเปลี่ยนให้ชี้ commit อื่นได้ และการตรวจ ZIP hash ไม่ได้พิสูจน์ว่า ZIP ในเครื่องมาจาก commit ที่ระบุ
 
-CLI จาก release `v1.1.0` ในตัวอย่างนี้ยังไม่รองรับคำสั่งสั้น จึงต้องระบุ version และ checksum:
+ตัวอย่างนี้ระบุ version และ checksum เพื่อเลือก release แบบชัดเจน:
 
 ```sh
-chmod +x "$HOME/ai-framework-releases/v1.1.0/ai-framework"
+chmod +x "$HOME/ai-framework-releases/v1.4.0/ai-framework"
 cd /path/to/your-project
-"$HOME/ai-framework-releases/v1.1.0/ai-framework" init project . \
-  --version v1.1.0 \
-  --sha256 7fccbeff9b3e11906b2083049334485b903fc002bc29bc224002d4e9fdcbab37 \
-  --archive "$HOME/ai-framework-releases/v1.1.0/framework-v1.1.0.zip"
+"$HOME/ai-framework-releases/v1.4.0/ai-framework" init project . \
+  --version v1.4.0 \
+  --sha256 d86da42febba05390ea6c408d58f61a3ccbf69e907e5376902502d6dbac2f987 \
+  --archive "$HOME/ai-framework-releases/v1.4.0/framework-v1.4.0.zip"
 ```
 
 `.` คือโปรเจกต์ปัจจุบัน คำสั่งสร้าง `AGENTS.md`, `CLAUDE.md` และ `.ai-framework/` รวมถึง `VERSION`, `config.yaml` และ `MANIFEST` ให้ตรวจผลและ commit ไฟล์เหล่านี้ใน repository ของโปรเจกต์ตามความเหมาะสม ไฟล์บริบท การตัดสินใจ และ handoff ของโปรเจกต์ควรอยู่ในพื้นที่ที่โปรเจกต์ดูแลเอง ไม่แก้ไฟล์ managed โดยตรง
@@ -94,7 +94,7 @@ cd /path/to/your-project
 
 CLI ตั้งแต่ `v1.3.0` รองรับ `ai --version` หรือ `ai version` เมื่อไฟล์คำสั่งชื่อ `ai` (ถ้าใช้ชื่อ `ai-framework` ให้ใช้ชื่อนั้นแทน) โดยไม่ต้องเชื่อมต่ออินเทอร์เน็ต CLI ใน release `v1.2.0` และก่อนหน้ายังไม่รองรับคำสั่งนี้
 
-CLI ตั้งแต่ `v1.4.0` รองรับ `ai --help` หรือ `ai help` และใช้ `ai project update` เพื่ออัปเดตโปรเจกต์ โดยละ path ได้เมื่อใช้โฟลเดอร์ปัจจุบัน คำสั่ง `ai framework update` ใช้ไม่ได้ตั้งแต่รุ่นนี้ แต่ release ถึง `v1.3.0` ยังใช้ชื่อเดิมตามตัวอย่างในหัวข้ออัปเดตด้านล่าง ส่วน `ai update` สำหรับอัปเดต CLI ยังไม่ได้พัฒนา
+CLI ตั้งแต่ `v1.4.0` รองรับ `ai --help` หรือ `ai help` และใช้ `ai project update` เพื่ออัปเดตโปรเจกต์ โดยละ path ได้เมื่อใช้โฟลเดอร์ปัจจุบัน คำสั่ง `ai framework update` ใช้ไม่ได้ตั้งแต่รุ่นนี้ แต่ CLI release ถึง `v1.3.0` ยังใช้ชื่อเดิม ส่วน `ai update` สำหรับอัปเดต CLI ยังไม่ได้พัฒนา
 
 เวอร์ชัน CLI แยกจาก framework ที่ติดตั้งในโปรเจกต์ ตรวจ commit ที่โปรเจกต์ใช้อยู่ด้วย `cat .ai-framework/VERSION` จากโฟลเดอร์โปรเจกต์
 
@@ -162,13 +162,13 @@ pm status — รวม milestone, dependencies, critical path และคว�
 
 ## 8. อัปเดตหรือย้อนเวอร์ชัน
 
-สำหรับโปรเจกต์ที่ติดตั้งด้วย shell CLI schema 2 ให้ดาวน์โหลด CLI และ ZIP ของ release เป้าหมาย ตรวจ checksum แล้วรันจากโปรเจกต์ เช่น อัปเดตเป็น `v1.1.0`:
+สำหรับโปรเจกต์ที่ติดตั้งด้วย shell CLI schema 2 ให้ดาวน์โหลด CLI และ ZIP ของ release เป้าหมาย ตรวจ checksum แล้วรันจากโปรเจกต์ เช่น อัปเดตเป็น `v1.4.0`:
 
 ```sh
-"$HOME/ai-framework-releases/v1.1.0/ai-framework" framework update . \
-  --version v1.1.0 \
-  --sha256 7fccbeff9b3e11906b2083049334485b903fc002bc29bc224002d4e9fdcbab37 \
-  --archive "$HOME/ai-framework-releases/v1.1.0/framework-v1.1.0.zip"
+"$HOME/ai-framework-releases/v1.4.0/ai-framework" project update . \
+  --version v1.4.0 \
+  --sha256 d86da42febba05390ea6c408d58f61a3ccbf69e907e5376902502d6dbac2f987 \
+  --archive "$HOME/ai-framework-releases/v1.4.0/framework-v1.4.0.zip"
 ```
 
 ตรวจ diff แล้วพิมพ์ `yes` เพื่อยืนยัน หรือปฏิเสธเพื่อยกเลิก การย้อนเวอร์ชันใช้ `project update` ใน CLI v1.4.0 ขึ้นไป หรือ `framework update` ใน CLI รุ่นเก่า พร้อม tag/commit และ ZIP ของเวอร์ชันก่อนหน้า เก็บ ZIP และ checksum เดิมไว้ สำรองโปรเจกต์ก่อนอัปเดต: write error ปกติมีการพยายาม rollback แต่การหยุดกลางคันหรือเครื่องขัดข้องอาจต้องกู้เอง
