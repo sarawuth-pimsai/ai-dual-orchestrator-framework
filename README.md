@@ -43,9 +43,9 @@ The shell CLI installs project entry points and a fixed subset of the framework 
 
 Run `ai-framework --version` (or `ai-framework version`) to show the CLI version without network access. If the executable is named `ai`, use `ai --version`. This reports the CLI version, not the framework commit installed in a project; inspect `.ai-framework/VERSION` in the project for that commit. Published CLI v1.2.0 and earlier do not support this command.
 
-The current development CLI provides `ai --help`, `ai update`, `ai init project [DIR]` and `ai project update [DIR]`. Omit `DIR` to use the current directory. `ai update` updates only the installed CLI, after confirmation; project updates preview a diff and require their own confirmation. The `ai framework update` name is not supported in CLI v1.4.0 or newer. The published v1.4.0 CLI does not support `ai update` or automatic release checksums; see the [Thai guide](GUIDE.th.md) for version-specific instructions.
+CLI v1.5.0 provides `ai --help`, `ai update`, `ai init project [DIR]` and `ai project update [DIR]`. Omit `DIR` to use the current directory. `ai update` updates only the installed CLI, after confirmation; project updates preview a diff and require their own confirmation. The `ai framework update` name is not supported in CLI v1.4.0 or newer. CLI v1.4.0 and earlier do not support `ai update` or automatic release checksums; see the [Thai guide](GUIDE.th.md) for version-specific instructions.
 
-For a release tag, the development CLI downloads the GitHub release's `SHA256SUMS` and matching ZIP over HTTPS and verifies the ZIP before making changes. This removes the per-release trust-file setup. The checksum and archive come from the same source: this verifies integrity, not independent authenticity. Review the release and use an independently obtained `--sha256` if stronger source verification is needed. With `--commit`, a 40-character commit, `--sha256` and optionally `--archive` provide a pinned, offline-capable route. The archive digest alone does not prove an arbitrary local ZIP corresponds to the named commit.
+For a release tag, CLI v1.5.0 downloads the GitHub release's `SHA256SUMS` and matching ZIP over HTTPS and verifies the ZIP before making changes. This removes the per-release trust-file setup. The checksum and archive come from the same source: this verifies integrity, not independent authenticity. Review the release and use an independently obtained `--sha256` if stronger source verification is needed. With `--commit`, a 40-character commit, `--sha256` and optionally `--archive` provide a pinned, offline-capable route. The archive digest alone does not prove an arbitrary local ZIP corresponds to the named commit.
 
 ```sh
 ai update
@@ -54,7 +54,7 @@ ai project update
 ai init project . --commit FULL_40_CHAR_COMMIT --sha256 TRUSTED_64_CHAR_SHA256 --archive /path/to/framework.zip
 ```
 
-`ai update` stages the replacement in the CLI's directory, verifies its checksum, asks for confirmation, and replaces the executable by rename. It refuses symlinked executables, checks that the original did not change after preview, and does not touch projects. If the CLI is installed through a package manager, use that manager instead. A copy of the original or an independently verified release asset should be retained if manual rollback is needed; abrupt interruption or filesystem failure can still require recovery. Git, curl and network access are required when resolving a release. The previously published v1.4.0 CLI still requires the separately configured trust file for short commands; these changes will require a new CLI release.
+`ai update` stages the replacement in the CLI's directory, verifies its checksum, asks for confirmation, and replaces the executable by rename. It refuses symlinked executables, checks that the original did not change after preview, and does not touch projects. If the CLI is installed through a package manager, use that manager instead. A copy of the original or an independently verified release asset should be retained if manual rollback is needed; abrupt interruption or filesystem failure can still require recovery. Git, curl and network access are required when resolving a project release. The older v1.4.0 CLI still requires the separately configured trust file for short commands.
 
 `init` refuses existing managed paths and is safe to repeat with identical files. Move or reconcile existing instructions yourself before initialization; the tool never silently overwrites them. Update checks configuration compatibility and managed file hashes, shows a diff, and requires the operator to type `yes`. Local edits to managed files block updates and must be reconciled first. To restore an earlier version, run `project update` with its previous commit and trusted archive digest, review the diff and confirm. Keep the older archive if GitHub serves different ZIP bytes later. Save a project backup or use version control before updating: normal write errors trigger rollback, but an interruption or machine failure may require manual recovery.
 
@@ -78,6 +78,7 @@ Troubleshooting: a 404 or authentication error requires verified private-reposit
 - `templates/`: reusable project documents.
 - `USAGE.md`: session startup for ChatGPT, Claude Code and Codex.
 - `GUIDE.th.md`: Thai installation, workflow, handoff, PR and update guide (read from this repository; not included in the bootstrap-managed document set).
+- `RELEASING.md`: this repository's release procedure and Founder delegation.
 - `examples/`: example handoff and fictional workflow dry-run.
 
 ## Integration boundaries
