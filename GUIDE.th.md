@@ -23,7 +23,7 @@
 
 ### ตั้งค่าเพื่อใช้คำสั่งสั้นจากทุกโปรเจกต์
 
-CLI ที่รองรับคำสั่งสั้นอยู่บน `main` ที่ commit `3054febd0fb5f660ad2d784c2fc41303acaff70b` และยังไม่ได้ออก release ใหม่ ตัวอย่างนี้ติดตั้งเฉพาะ CLI ใน `~/.local/bin`; ตรวจไฟล์เดิมก่อน เพราะคำสั่ง `cp` จะเขียนทับชื่อเดียวกัน
+ตัวอย่างนี้ใช้ CLI ที่รองรับคำสั่งสั้นจาก commit `3054febd0fb5f660ad2d784c2fc41303acaff70b` และติดตั้งเฉพาะ CLI ใน `~/.local/bin` ตรวจไฟล์เดิมก่อน เพราะคำสั่ง `cp` จะเขียนทับชื่อเดียวกัน ตรวจ [Releases](https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases) สำหรับ CLI รุ่นเผยแพร่ล่าสุดด้วย
 
 ```sh
 mkdir -p "$HOME/ai-framework-releases/cli-3054feb"
