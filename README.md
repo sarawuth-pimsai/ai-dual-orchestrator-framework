@@ -31,7 +31,7 @@ Business GPT, Tech/PO Claude and PM use the shared [Founder communication templa
 
 ## Quick start
 
-1. Download the CLI and exact ZIP for a [release](https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases) and independently verify their checksums and commit. Install them into the **adopting project**, not this framework repository. See the [Thai guide](GUIDE.th.md#2-ติดตั้งในโปรเจกต์ใหม่) for complete commands.
+1. Download a trusted CLI from a [release](https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases) and install the framework into the **adopting project**, not this framework repository. See the [Thai guide](GUIDE.th.md#2-ติดตั้งในโปรเจกต์ใหม่) for complete commands.
 2. Copy `.ai-framework/framework/templates/PROJECT_BOOTSTRAP.md` to a project-owned location and record the canonical repository, board, decision records and access. Keep project-specific context outside managed framework files.
 3. Open Claude Code in the project and start the Tech role using `.ai-framework/framework/roles/TECH_ORCHESTRATOR.md`. Give PO your requirements; implementation requires explicit Founder authorization.
 4. Open a separate GPT Business session when needed. Relay handoffs and require real receiver acknowledgment. Use a separate PM session if integrated tracking is needed.
@@ -43,47 +43,18 @@ The shell CLI installs project entry points and a fixed subset of the framework 
 
 Run `ai-framework --version` (or `ai-framework version`) to show the CLI version without network access. If the executable is named `ai`, use `ai --version`. This reports the CLI version, not the framework commit installed in a project; inspect `.ai-framework/VERSION` in the project for that commit. Published CLI v1.2.0 and earlier do not support this command.
 
-CLI v1.4.0 provides `ai --help` and `ai help`. Use `ai init project [DIR]` to install and `ai project update [DIR]` to update project files; omitting `DIR` selects the current directory. `ai framework update` is not supported from v1.4.0. Published releases through v1.3.0 still use `ai framework update DIR`. CLI self-update (`ai update`) is not implemented; project updates do not update the CLI.
+The current development CLI provides `ai --help`, `ai update`, `ai init project [DIR]` and `ai project update [DIR]`. Omit `DIR` to use the current directory. `ai update` updates only the installed CLI, after confirmation; project updates preview a diff and require their own confirmation. The `ai framework update` name is not supported in CLI v1.4.0 or newer. The published v1.4.0 CLI does not support `ai update` or automatic release checksums; see the [Thai guide](GUIDE.th.md) for version-specific instructions.
 
-Obtain a full 40-character framework commit and the SHA-256 of the **exact ZIP archive** through a trusted channel. For a private GitHub repository set `GITHUB_TOKEN` to a token with repository read access; keep it out of shell history and project files. The CLI fetches the commit-specific GitHub ZIP over HTTPS, or use `--archive /path/to/framework.zip` for a previously downloaded archive. The supplied digest must match the exact ZIP bytes. Do not trust a checksum obtained solely from the same unverified source as the archive.
-
-```sh
-./ai-framework init project /path/to/project --commit FULL_40_CHAR_COMMIT --sha256 TRUSTED_64_CHAR_SHA256
-./ai-framework project update /path/to/project --commit NEW_40_CHAR_COMMIT --sha256 TRUSTED_64_CHAR_SHA256
-```
-
-Alternatively, use a release tag such as `--version v1.0.0` in place of `--commit`. This requires Git and network access to resolve the tag to a commit; the resolved commit is recorded in the project. Verify that the tag points to the intended commit through a trusted channel, and provide the trusted SHA-256 of that commit's exact ZIP. Tags can move, so a tag name alone is not an immutable pin. For example:
+For a release tag, the development CLI downloads the GitHub release's `SHA256SUMS` and matching ZIP over HTTPS and verifies the ZIP before making changes. This removes the per-release trust-file setup. The checksum and archive come from the same source: this verifies integrity, not independent authenticity. Review the release and use an independently obtained `--sha256` if stronger source verification is needed. With `--commit`, a 40-character commit, `--sha256` and optionally `--archive` provide a pinned, offline-capable route. The archive digest alone does not prove an arbitrary local ZIP corresponds to the named commit.
 
 ```sh
-./ai-framework init project . --version v1.0.0 --sha256 TRUSTED_64_CHAR_SHA256
-./ai-framework project update . --version v1.1.0 --sha256 TRUSTED_64_CHAR_SHA256
+ai update
+ai init project
+ai project update
+ai init project . --commit FULL_40_CHAR_COMMIT --sha256 TRUSTED_64_CHAR_SHA256 --archive /path/to/framework.zip
 ```
 
-If neither `--version` nor `--commit` is supplied, the CLI resolves GitHub's latest published release for this public repository, then resolves its tag to a commit. This requires `curl`, Git and network access even when `--archive` is supplied. For reproducibility or offline use, pin an independently verified `--commit` and use `--archive`.
-
-```sh
-./ai-framework init project . --sha256 TRUSTED_LATEST_ZIP_SHA256 --archive /path/to/latest-release.zip
-./ai-framework project update . --sha256 TRUSTED_LATEST_ZIP_SHA256 --archive /path/to/latest-release.zip
-```
-
-For shorter commands, install a trusted copy of the current CLI into a directory on `PATH`, and create `${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework/trusted-releases`. Each line must contain a release tag, its full commit, and the SHA-256 of the exact `framework-TAG.zip` release asset, separated by spaces. Independently authenticate the commit and digest before recording them; do not treat a checksum from the same unverified source as independent authentication. See the [Thai guide](GUIDE.th.md) for a complete CLI download and setup example. Before the following example, check for an existing CLI because `cp` overwrites it; after verifying the values for `v1.4.0`:
-
-```sh
-mkdir -p "$HOME/.local/bin" "${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework"
-cp /path/to/trusted/ai-framework "$HOME/.local/bin/ai-framework"
-chmod +x "$HOME/.local/bin/ai-framework"
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-Add the PATH setting to your shell configuration if needed. Use an editor to add the following line to the trust file, preserving existing entries and adding only one entry per release:
-
-```text
-v1.4.0 7d060f675edf8146647718f93c55db59a8e30821 d86da42febba05390ea6c408d58f61a3ccbf69e907e5376902502d6dbac2f987
-```
-
-You can then run `ai-framework init project .` or `ai-framework project update .`; the CLI checks the resolved tag against the recorded commit, downloads the named release ZIP and checks its digest. If a newer release has no trusted entry, the CLI stops without modifying the project until its commit and digest are independently verified and added. If specifying `--archive` without `--sha256`, it must match the trusted release asset bytes. You can use `AI_FRAMEWORK_TRUST_FILE` to choose a different trust file. Direct `--commit` use still requires `--sha256`.
-
-The previously published `v1.1.0` CLI does not support the latest-release default or the trust file; these require the newer CLI.
+`ai update` stages the replacement in the CLI's directory, verifies its checksum, asks for confirmation, and replaces the executable by rename. It refuses symlinked executables, checks that the original did not change after preview, and does not touch projects. If the CLI is installed through a package manager, use that manager instead. A copy of the original or an independently verified release asset should be retained if manual rollback is needed; abrupt interruption or filesystem failure can still require recovery. Git, curl and network access are required when resolving a release. The previously published v1.4.0 CLI still requires the separately configured trust file for short commands; these changes will require a new CLI release.
 
 `init` refuses existing managed paths and is safe to repeat with identical files. Move or reconcile existing instructions yourself before initialization; the tool never silently overwrites them. Update checks configuration compatibility and managed file hashes, shows a diff, and requires the operator to type `yes`. Local edits to managed files block updates and must be reconciled first. To restore an earlier version, run `project update` with its previous commit and trusted archive digest, review the diff and confirm. Keep the older archive if GitHub serves different ZIP bytes later. Save a project backup or use version control before updating: normal write errors trigger rollback, but an interruption or machine failure may require manual recovery.
 

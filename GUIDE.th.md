@@ -21,82 +21,47 @@
 
 ตรวจสอบว่าอยู่ใน **โปรเจกต์ที่ต้องการติดตั้ง** และสำรองงานหรือ commit งานเดิมก่อน หากโปรเจกต์มี `AGENTS.md`, `CLAUDE.md` หรือไฟล์ managed อยู่แล้ว `init` จะปฏิเสธเมื่อเนื้อหาไม่ตรงกัน ให้ตรวจและจัดการด้วยตนเองก่อน ไม่เขียนทับโดยอัตโนมัติ
 
-### ตั้งค่าเพื่อใช้คำสั่งสั้นจากทุกโปรเจกต์
+### รุ่นปัจจุบันและการเตรียมใช้คำสั่งใหม่
 
-ตัวอย่างนี้ใช้ CLI จาก release `v1.4.0` และติดตั้งเฉพาะ CLI ใน `~/.local/bin` ตรวจไฟล์เดิมก่อน เพราะคำสั่ง `cp` จะเขียนทับชื่อเดียวกัน ตรวจ [Releases](https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases) สำหรับ CLI รุ่นเผยแพร่ล่าสุดด้วย
+release `v1.4.0` ที่เผยแพร่แล้ว **ยังต้องใช้ trust file** เมื่อละ `--sha256` และยังไม่มี `ai update` การเปลี่ยนแปลงให้ดาวน์โหลด checksum อัตโนมัติอยู่ใน CLI รุ่นพัฒนา ยังต้องออก release ใหม่ก่อนจึงจะดาวน์โหลดจากหน้า Releases ได้
 
-```sh
-mkdir -p "$HOME/ai-framework-releases/v1.4.0"
-curl -fL https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/download/v1.4.0/ai-framework -o "$HOME/ai-framework-releases/v1.4.0/ai-framework"
-shasum -a 256 "$HOME/ai-framework-releases/v1.4.0/ai-framework"
-```
-
-ค่า SHA-256 ของ CLI ใน release ตัวอย่างคือ `71f944a94f533a2521879d8f44da5ae8de3e6cca08fab6d5923e183f10f127da` ให้ยืนยัน commit และ hash ผ่านช่องทางที่เชื่อถือได้แยกจากแหล่งดาวน์โหลดก่อนติดตั้ง จากนั้น:
+ใน CLI รุ่นใหม่นั้น หลังติดตั้ง CLI ที่ตรวจสอบแล้วลงใน `PATH` จะใช้คำสั่ง:
 
 ```sh
-mkdir -p "$HOME/.local/bin" "${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework"
-cp "$HOME/ai-framework-releases/v1.4.0/ai-framework" "$HOME/.local/bin/ai-framework"
-chmod +x "$HOME/.local/bin/ai-framework"
-export PATH="$HOME/.local/bin:$PATH"
+ai --help
+ai --version
+ai init project
+ai project update
+ai update
 ```
 
-`export` มีผลกับ shell ปัจจุบัน หากต้องการใช้ใน shell ใหม่ ให้เพิ่ม `export PATH="$HOME/.local/bin:$PATH"` ในไฟล์ตั้งค่า shell ของคุณ เช่น `~/.zshrc` แล้วเปิด shell ใหม่
+`ai update` เปลี่ยนเฉพาะไฟล์ CLI และถามก่อนเขียน ส่วน `ai project update` เปลี่ยนเฉพาะโปรเจกต์ปัจจุบัน แสดง diff และถามก่อนเขียน ทั้งสองไม่ได้อนุญาตหรือสั่งให้อีกส่วนอัปเดตโดยอัตโนมัติ ถ้าติดตั้ง CLI ผ่าน package manager ให้ใช้ package manager อัปเดตแทน
 
-เปิดไฟล์ `${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework/trusted-releases` ด้วย editor และเพิ่ม **หนึ่งบรรทัดต่อหนึ่ง release** หลังตรวจสอบ tag, commit และ SHA-256 ของไฟล์ ZIP release ผ่านช่องทางที่เชื่อถือได้แยกจากแหล่งดาวน์โหลด ตัวอย่างสำหรับ `v1.4.0`:
+CLI รุ่นใหม่ดาวน์โหลด ZIP และ `SHA256SUMS` ของ release จาก GitHub แล้วตรวจ checksum ให้เอง ข้อมูลจากแหล่งเดียวกันช่วยตรวจความตรงกันของไฟล์ แต่ไม่ยืนยันแหล่งที่มาอย่างอิสระ หากต้องการตรวจสอบแยก ให้ใช้ `--sha256` ที่ได้รับจากช่องทางที่เชื่อถือได้ สำหรับการใช้งาน offline ให้ระบุ commit เต็ม, checksum และ `--archive` ของ ZIP ที่ตรวจสอบแล้ว
+
+### ตัวอย่างสำหรับ CLI v1.4.0 ที่เผยแพร่แล้ว
+
+ดาวน์โหลดไฟล์ CLI และ ZIP จาก [release v1.4.0](https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/tag/v1.4.0) แล้วตรวจ checksum จากแหล่งที่เชื่อถือได้ ค่าของ CLI คือ `71f944a94f533a2521879d8f44da5ae8de3e6cca08fab6d5923e183f10f127da` และ ZIP คือ `d86da42febba05390ea6c408d58f61a3ccbf69e907e5376902502d6dbac2f987` ตรวจสอบไฟล์เดิมก่อนคัดลอก CLI ลง `PATH` เพราะการคัดลอกอาจเขียนทับไฟล์ที่มีอยู่
+
+หากใช้ CLI `v1.4.0` แบบไม่มี `--sha256` ต้องเพิ่มบรรทัดที่ตรวจสอบอย่างอิสระแล้วใน `${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework/trusted-releases` ก่อน:
 
 ```text
 v1.4.0 7d060f675edf8146647718f93c55db59a8e30821 d86da42febba05390ea6c408d58f61a3ccbf69e907e5376902502d6dbac2f987
 ```
 
-จากนั้นใช้จากโฟลเดอร์โปรเจกต์ได้:
+หรือใช้ CLI v1.4.0 ระบุ checksum และ ZIP โดยตรง:
 
 ```sh
-cd /path/to/your-project
-ai-framework init project .
-```
-
-CLI จะเลือก GitHub release ล่าสุด ตรวจ commit กับ trust file และดาวน์โหลด ZIP ของ release เพื่อตรวจ checksum หาก release ล่าสุดยังไม่มีรายการที่ยืนยันแล้ว ให้ตรวจสอบและเพิ่มรายการใหม่ก่อน โดยไม่แก้โปรเจกต์โดยอัตโนมัติ การเลือก release ล่าสุดต้องใช้อินเทอร์เน็ต; สำหรับ offline ให้ใช้ `--commit`, `--sha256` และ `--archive` ดูรายละเอียดใน [README](README.md#bootstrap-cli)
-
-### ทางเลือก: ระบุเวอร์ชันและ ZIP ด้วยตนเอง
-
-ดาวน์โหลดไฟล์ release ไปไว้ในโฟลเดอร์แยก แล้วตรวจสอบ commit และ checksum จากช่องทางที่เชื่อถือได้แยกจากแหล่งดาวน์โหลด:
-
-```sh
-mkdir -p "$HOME/ai-framework-releases/v1.4.0"
-curl -fL https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/download/v1.4.0/ai-framework -o "$HOME/ai-framework-releases/v1.4.0/ai-framework"
-curl -fL https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/download/v1.4.0/framework-v1.4.0.zip -o "$HOME/ai-framework-releases/v1.4.0/framework-v1.4.0.zip"
-shasum -a 256 "$HOME/ai-framework-releases/v1.4.0/ai-framework" "$HOME/ai-framework-releases/v1.4.0/framework-v1.4.0.zip"
-```
-
-ค่า SHA-256 สำหรับตัวอย่างนี้:
-
-```text
-ai-framework           71f944a94f533a2521879d8f44da5ae8de3e6cca08fab6d5923e183f10f127da
-framework-v1.4.0.zip   d86da42febba05390ea6c408d58f61a3ccbf69e907e5376902502d6dbac2f987
-```
-
-เทียบ hash ของ CLI และ ZIP ก่อนรัน CLI ค่าที่เผยแพร่พร้อมไฟล์ช่วยตรวจความตรงกัน แต่เพียงอย่างเดียวไม่ใช่การยืนยันแหล่งที่มาอย่างอิสระ Tag สามารถถูกเปลี่ยนให้ชี้ commit อื่นได้ และการตรวจ ZIP hash ไม่ได้พิสูจน์ว่า ZIP ในเครื่องมาจาก commit ที่ระบุ
-
-ตัวอย่างนี้ระบุ version และ checksum เพื่อเลือก release แบบชัดเจน:
-
-```sh
-chmod +x "$HOME/ai-framework-releases/v1.4.0/ai-framework"
-cd /path/to/your-project
-"$HOME/ai-framework-releases/v1.4.0/ai-framework" init project . \
-  --version v1.4.0 \
+ai init project . --version v1.4.0 \
   --sha256 d86da42febba05390ea6c408d58f61a3ccbf69e907e5376902502d6dbac2f987 \
-  --archive "$HOME/ai-framework-releases/v1.4.0/framework-v1.4.0.zip"
+  --archive /path/to/framework-v1.4.0.zip
 ```
 
-`.` คือโปรเจกต์ปัจจุบัน คำสั่งสร้าง `AGENTS.md`, `CLAUDE.md` และ `.ai-framework/` รวมถึง `VERSION`, `config.yaml` และ `MANIFEST` ให้ตรวจผลและ commit ไฟล์เหล่านี้ใน repository ของโปรเจกต์ตามความเหมาะสม ไฟล์บริบท การตัดสินใจ และ handoff ของโปรเจกต์ควรอยู่ในพื้นที่ที่โปรเจกต์ดูแลเอง ไม่แก้ไฟล์ managed โดยตรง
+`.` คือโปรเจกต์ปัจจุบัน คำสั่งสร้าง `AGENTS.md`, `CLAUDE.md` และ `.ai-framework/` ให้ตรวจผลและ commit ตามความเหมาะสม โดยเก็บบริบทและการตัดสินใจในพื้นที่ที่โปรเจกต์ดูแลเอง
 
 ### ตรวจเวอร์ชัน CLI และ framework
 
-CLI ตั้งแต่ `v1.3.0` รองรับ `ai --version` หรือ `ai version` เมื่อไฟล์คำสั่งชื่อ `ai` (ถ้าใช้ชื่อ `ai-framework` ให้ใช้ชื่อนั้นแทน) โดยไม่ต้องเชื่อมต่ออินเทอร์เน็ต CLI ใน release `v1.2.0` และก่อนหน้ายังไม่รองรับคำสั่งนี้
-
-CLI ตั้งแต่ `v1.4.0` รองรับ `ai --help` หรือ `ai help` และใช้ `ai project update` เพื่ออัปเดตโปรเจกต์ โดยละ path ได้เมื่อใช้โฟลเดอร์ปัจจุบัน คำสั่ง `ai framework update` ใช้ไม่ได้ตั้งแต่รุ่นนี้ แต่ CLI release ถึง `v1.3.0` ยังใช้ชื่อเดิม ส่วน `ai update` สำหรับอัปเดต CLI ยังไม่ได้พัฒนา
-
-เวอร์ชัน CLI แยกจาก framework ที่ติดตั้งในโปรเจกต์ ตรวจ commit ที่โปรเจกต์ใช้อยู่ด้วย `cat .ai-framework/VERSION` จากโฟลเดอร์โปรเจกต์
+`ai --version` หรือ `ai version` แสดงเวอร์ชัน CLI ตั้งแต่ v1.3.0 ส่วน `cat .ai-framework/VERSION` ที่รันจากโฟลเดอร์โปรเจกต์แสดง commit ของ framework ที่ติดตั้ง ซึ่งเป็นคนละข้อมูลกัน
 
 ## 3. เตรียมข้อมูลโปรเจกต์
 
@@ -162,15 +127,8 @@ pm status — รวม milestone, dependencies, critical path และคว�
 
 ## 8. อัปเดตหรือย้อนเวอร์ชัน
 
-สำหรับโปรเจกต์ที่ติดตั้งด้วย shell CLI schema 2 ให้ดาวน์โหลด CLI และ ZIP ของ release เป้าหมาย ตรวจ checksum แล้วรันจากโปรเจกต์ เช่น อัปเดตเป็น `v1.4.0`:
+ใน CLI รุ่นพัฒนา ใช้ `ai update` เพื่ออัปเดต CLI และใช้ `ai project update` จากโฟลเดอร์โปรเจกต์เพื่ออัปเดต framework แต่ละคำสั่งแสดงสิ่งที่จะเปลี่ยนและถามให้พิมพ์ `yes` ก่อนเขียน ใน CLI v1.4.0 ที่เผยแพร่แล้ว `ai update` ยังไม่มี และการอัปเดตโปรเจกต์ยังต้องตั้ง trust file หรือระบุ `--sha256` ด้วยตนเอง
 
-```sh
-"$HOME/ai-framework-releases/v1.4.0/ai-framework" project update . \
-  --version v1.4.0 \
-  --sha256 d86da42febba05390ea6c408d58f61a3ccbf69e907e5376902502d6dbac2f987 \
-  --archive "$HOME/ai-framework-releases/v1.4.0/framework-v1.4.0.zip"
-```
+ตรวจ diff ก่อนยืนยัน การย้อน framework ใช้ `ai project update --commit FULL_COMMIT --sha256 TRUSTED_SHA256 --archive /path/to/old.zip` เก็บ ZIP และ checksum เดิมไว้ สำรองโปรเจกต์ก่อนอัปเดต: write error ปกติมีการพยายาม rollback แต่การหยุดกลางคันหรือเครื่องขัดข้องอาจต้องกู้เอง สำหรับ CLI ให้เก็บสำเนารุ่นก่อนที่ตรวจสอบแล้วไว้เพื่อกู้ด้วยตนเองหากจำเป็น
 
-ตรวจ diff แล้วพิมพ์ `yes` เพื่อยืนยัน หรือปฏิเสธเพื่อยกเลิก การย้อนเวอร์ชันใช้ `project update` ใน CLI v1.4.0 ขึ้นไป หรือ `framework update` ใน CLI รุ่นเก่า พร้อม tag/commit และ ZIP ของเวอร์ชันก่อนหน้า เก็บ ZIP และ checksum เดิมไว้ สำรองโปรเจกต์ก่อนอัปเดต: write error ปกติมีการพยายาม rollback แต่การหยุดกลางคันหรือเครื่องขัดข้องอาจต้องกู้เอง
-
-หากพบ `managed files were modified` ให้ตรวจและจัดการไฟล์ที่เปลี่ยนก่อน ระบบไม่เขียนทับโดยอัตโนมัติ หากพบ SHA mismatch ให้ตรวจ ZIP และ checksum ที่เชื่อถือได้ใหม่ Python CLI รุ่นเดิมใช้ schema 1 และอัปเดตข้ามกับ shell schema 2 ไม่ได้ ต้องสำรองและย้ายด้วยตนเอง ดู [README](README.md) และ [ARCHITECTURE_BOOTSTRAP.md](ARCHITECTURE_BOOTSTRAP.md)
+หากพบ `managed files were modified` ให้ตรวจและจัดการไฟล์ที่เปลี่ยนก่อน ระบบไม่เขียนทับโดยอัตโนมัติ หากพบ SHA mismatch ให้ตรวจ ZIP และ checksum ใหม่ Python CLI รุ่นเดิมใช้ schema 1 และอัปเดตข้ามกับ shell schema 2 ไม่ได้ ต้องสำรองและย้ายด้วยตนเอง ดู [README](README.md) และ [ARCHITECTURE_BOOTSTRAP.md](ARCHITECTURE_BOOTSTRAP.md)

@@ -4,8 +4,8 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/framework-shell-test.XXXXXXXX")
 trap 'rm -rf "$tmp"' EXIT
 cli="$root/bin/ai-framework"
-[ "$("$cli" --version)" = 'ai-framework 1.4.0' ]
-[ "$("$cli" version)" = 'ai-framework 1.4.0' ]
+[ "$("$cli" --version)" = 'ai-framework 1.5.0-dev' ]
+[ "$("$cli" version)" = 'ai-framework 1.5.0-dev' ]
 if "$cli" --version unexpected >/dev/null 2>&1; then exit 1; fi
 "$cli" --help | rg -q 'project update'
 "$cli" help | rg -q 'init project'
@@ -35,10 +35,15 @@ EOF
 chmod +x "$tmp/tagbin/git"
 cat > "$tmp/tagbin/curl" <<'EOF'
 #!/usr/bin/env bash
+url=
 while [ "$#" -gt 0 ]; do
-  if [ "$1" = -o ]; then cp "$TEST_RELEASE_ZIP" "$2"; exit; fi
+  case "$1" in https://*/releases/download/*) url=$1 ;; -o) dest=$2 ;; esac
   shift
 done
+if [ -n "$url" ]; then
+  case "$url" in */SHA256SUMS) cp "$TEST_SUMS" "$dest" ;; */framework-*.zip) cp "$TEST_RELEASE_ZIP" "$dest" ;; */ai-framework) cp "$TEST_CLI_ASSET" "$dest" ;; *) exit 1 ;; esac
+  exit
+fi
 printf '%s' "${TEST_LATEST_URL:-https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/tag/v1.0.0}"
 EOF
 chmod +x "$tmp/tagbin/curl"
@@ -49,16 +54,28 @@ PATH="$tmp/tagbin:$PATH" run init project "$tmp/latest" --sha256 "$h1" --archive
 run init project "$tmp/latest-update" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip"
 printf 'yes\n' | PATH="$tmp/tagbin:$PATH" run project update "$tmp/latest-update" --sha256 "$h1" --archive "$tmp/one.zip"
 [ "$(cat "$tmp/latest-update/.ai-framework/VERSION")" = "$c1" ]
-printf 'v1.0.0 %s %s\n' "$c1" "$h1" > "$tmp/trusted-releases"
-AI_FRAMEWORK_TRUST_FILE="$tmp/trusted-releases" TEST_RELEASE_ZIP="$tmp/one.zip" PATH="$tmp/tagbin:$PATH" run init project "$tmp/simple"
+printf '#!/usr/bin/env bash\nprintf "new cli\\n"\n' > "$tmp/new-cli"
+cli_hash=$(hash "$tmp/new-cli")
+printf '%s  framework-v1.0.0.zip\n%s  ai-framework\n' "$h1" "$cli_hash" > "$tmp/SHA256SUMS"
+TEST_SUMS="$tmp/SHA256SUMS" TEST_RELEASE_ZIP="$tmp/one.zip" PATH="$tmp/tagbin:$PATH" run init project "$tmp/simple"
 [ "$(cat "$tmp/simple/.ai-framework/VERSION")" = "$c1" ]
-if AI_FRAMEWORK_TRUST_FILE="$tmp/missing-trust" PATH="$tmp/tagbin:$PATH" run init project "$tmp/untrusted" 2>/dev/null; then exit 1; fi
-[ ! -e "$tmp/untrusted" ]
-printf 'v1.0.0 %s %s\n' "$c2" "$h1" > "$tmp/wrong-trust"
-if AI_FRAMEWORK_TRUST_FILE="$tmp/wrong-trust" PATH="$tmp/tagbin:$PATH" run init project "$tmp/wrong-tag" 2>/dev/null; then exit 1; fi
-[ ! -e "$tmp/wrong-tag" ]
-if AI_FRAMEWORK_TRUST_FILE="$tmp/trusted-releases" TEST_RELEASE_ZIP="$tmp/two.zip" PATH="$tmp/tagbin:$PATH" run init project "$tmp/wrong-asset" 2>/dev/null; then exit 1; fi
+if TEST_SUMS="$tmp/SHA256SUMS" TEST_RELEASE_ZIP="$tmp/two.zip" PATH="$tmp/tagbin:$PATH" run init project "$tmp/wrong-asset" 2>/dev/null; then exit 1; fi
 [ ! -e "$tmp/wrong-asset" ]
+cp "$cli" "$tmp/installed-ai"; chmod +x "$tmp/installed-ai"
+original_hash=$(hash "$tmp/installed-ai")
+printf 'no\n' | TEST_SUMS="$tmp/SHA256SUMS" TEST_CLI_ASSET="$tmp/new-cli" PATH="$tmp/tagbin:$PATH" "$tmp/installed-ai" update >/dev/null
+[ "$(hash "$tmp/installed-ai")" = "$original_hash" ]
+ln -s "$tmp/installed-ai" "$tmp/linked-ai"
+if printf 'yes\n' | TEST_SUMS="$tmp/SHA256SUMS" TEST_CLI_ASSET="$tmp/new-cli" PATH="$tmp/tagbin:$PATH" "$tmp/linked-ai" update >/dev/null 2>&1; then exit 1; fi
+[ "$(hash "$tmp/installed-ai")" = "$original_hash" ]
+printf '%s  framework-v1.0.0.zip\n%s  framework-v1.0.0.zip\n' "$h1" "$h1" > "$tmp/duplicate-sums"
+if TEST_SUMS="$tmp/duplicate-sums" TEST_RELEASE_ZIP="$tmp/one.zip" PATH="$tmp/tagbin:$PATH" run init project "$tmp/duplicate-checksum" 2>/dev/null; then exit 1; fi
+[ ! -e "$tmp/duplicate-checksum" ]
+printf 'yes\n' | TEST_SUMS="$tmp/SHA256SUMS" TEST_CLI_ASSET="$tmp/new-cli" PATH="$tmp/tagbin:$PATH" "$tmp/installed-ai" update >/dev/null
+[ "$("$tmp/installed-ai")" = 'new cli' ]
+cp "$cli" "$tmp/installed-ai"
+if printf 'yes\n' | TEST_SUMS="$tmp/SHA256SUMS" TEST_CLI_ASSET="$tmp/two.zip" PATH="$tmp/tagbin:$PATH" "$tmp/installed-ai" update >/dev/null 2>&1; then exit 1; fi
+[ "$(hash "$tmp/installed-ai")" = "$original_hash" ]
 if TEST_LATEST_URL=https://example.com/tag/v1.0.0 PATH="$tmp/tagbin:$PATH" run init project "$tmp/badlatest" --sha256 "$h1" --archive "$tmp/one.zip" 2>/dev/null; then exit 1; fi
 [ ! -e "$tmp/badlatest" ]
 if PATH="$tmp/tagbin:$PATH" run init project "$tmp/latest-wrong" --sha256 "$(printf '%064d' 0)" --archive "$tmp/one.zip" 2>/dev/null; then exit 1; fi

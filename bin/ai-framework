@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Bootstrap from a verified archive. Requires Bash, curl, unzip, sha256sum or shasum, and standard Unix tools.
 set -eu
-cli_version='1.4.0'
+cli_version='1.5.0-dev'
 fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 hash() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | awk '{print $1}'; else shasum -a 256 "$1" | awk '{print $1}'; fi; }
 usage() {
@@ -10,6 +10,7 @@ usage() {
 Usage: $name COMMAND [OPTIONS]
 
 Commands:
+  update               Update this CLI after confirmation (does not update projects).
   init project [DIR]   Install framework files into a project (default: current directory).
   project update [DIR] Update framework files in a project after preview and confirmation.
   version, --version   Show the CLI version, not the project framework version.
@@ -22,13 +23,61 @@ Project options:
   --archive ZIP        Use a local ZIP archive.
 
 Without --version or --commit, the latest published release is selected.
-Without --sha256, the selected release must be in the trusted-releases file.
-Project updates preview changes and require confirmation. CLI self-update is
-not implemented; project commands do not update the CLI.
+Without --sha256, release checksums are downloaded from GitHub. These checksums
+verify integrity, not independent authenticity. Project and CLI updates are
+separate, and both require confirmation before writing.
 EOF
 }
+repo_url='https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework'
+latest_release() {
+  local url tag
+  command -v curl >/dev/null 2>&1 || fail 'curl is required to resolve the latest release'
+  url=$(curl --fail --silent --show-error --location --proto-redir '=https' --max-time 60 --output /dev/null --write-out '%{url_effective}' "$repo_url/releases/latest") || fail 'cannot resolve latest release'
+  case "$url" in "$repo_url"/releases/tag/*) tag=${url##*/} ;; *) fail 'unexpected latest release URL' ;; esac
+  [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || fail 'invalid release tag'
+  printf '%s\n' "$tag"
+}
+download_release() {
+  curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 60 --max-filesize 20971520 "$repo_url/releases/download/$1/$2" -o "$3" || fail "release download failed: $2"
+}
+release_digest() {
+  local file=$1 asset=$2 digest
+  digest=$(awk -v name="$asset" '$2 == name { n++; value=$1 } END { if (n == 1) print value }' "$file")
+  [[ "$digest" =~ ^[0-9a-f]{64}$ ]] || fail "missing, duplicate or invalid checksum for $asset"
+  printf '%s\n' "$digest"
+}
+self_update() {
+  local version dir target work checksum old_hash new_hash answer
+  command -v curl >/dev/null 2>&1 || fail 'curl is required for updates'
+  command -v sha256sum >/dev/null 2>&1 || command -v shasum >/dev/null 2>&1 || fail 'missing sha256sum or shasum'
+  case "$0" in */*) target=$0 ;; *) target=$(command -v -- "$0") || fail 'cannot locate CLI' ;; esac
+  [ -f "$target" ] && [ ! -L "$target" ] || fail 'CLI must be a regular file, not a symlink'
+  dir=$(cd "$(dirname "$target")" && pwd -P) || fail 'cannot locate CLI directory'
+  target="$dir/$(basename "$target")"
+  [ -w "$dir" ] && [ -w "$target" ] || fail "CLI is not writable: $target"
+  version=$(latest_release)
+  work=$(mktemp -d "$dir/.ai-update.XXXXXXXX") || fail 'cannot create update staging directory'
+  update_stage=$work
+  trap 'rm -rf -- "$update_stage"' EXIT
+  download_release "$version" SHA256SUMS "$work/SHA256SUMS"
+  checksum=$(release_digest "$work/SHA256SUMS" ai-framework)
+  download_release "$version" ai-framework "$work/ai-framework"
+  [ "$(hash "$work/ai-framework")" = "$checksum" ] || fail 'CLI SHA-256 mismatch; no files changed'
+  old_hash=$(hash "$target"); new_hash=$(hash "$work/ai-framework")
+  if [ "$old_hash" = "$new_hash" ]; then printf 'CLI already matches %s.\n' "$version"; return; fi
+  printf 'Replace CLI %s (current %s) with release %s? Type yes: ' "$target" "$cli_version" "$version"
+  IFS= read -r answer || fail 'confirmation unavailable; no files changed'
+  [ "$answer" = yes ] || { printf 'Cancelled; no files changed.\n'; return; }
+  [ -f "$target" ] && [ ! -L "$target" ] && [ "$(hash "$target")" = "$old_hash" ] || fail 'CLI changed since preview; no files changed'
+  cp -p "$target" "$work/replacement" || fail 'cannot stage replacement'
+  cat "$work/ai-framework" > "$work/replacement" || fail 'cannot write replacement'
+  [ "$(hash "$work/replacement")" = "$checksum" ] || fail 'staged CLI checksum mismatch'
+  [ -f "$target" ] && [ ! -L "$target" ] && [ "$(hash "$target")" = "$old_hash" ] || fail 'CLI changed during update; no files changed'
+  mv -f "$work/replacement" "$target" || fail 'cannot replace CLI'
+  printf 'CLI updated to %s: %s\n' "$version" "$target"
+}
 if [ "$#" = 1 ]; then
-  case "$1" in --version|version) printf 'ai-framework %s\n' "$cli_version"; exit 0 ;; --help|-h|help) usage; exit 0 ;; esac
+  case "$1" in --version|version) printf 'ai-framework %s\n' "$cli_version"; exit 0 ;; --help|-h|help) usage; exit 0 ;; update) self_update; exit 0 ;; esac
 fi
 [ "$#" -ge 2 ] || { usage >&2; exit 1; }
 case "$1 $2" in 'init project') action=init ;; 'project update') action=update ;; *) usage >&2; exit 1 ;; esac
@@ -44,9 +93,7 @@ while [ "$#" -gt 0 ]; do
 done
 [ -z "$version" ] || [ -z "$commit" ] || fail 'choose either --commit or --version'
 if [ -z "$version" ] && [ -z "$commit" ]; then
-  command -v curl >/dev/null 2>&1 || fail 'curl is required to resolve the latest release'
-  latest_url=$(curl --fail --silent --show-error --location --proto-redir '=https' --max-time 60 --output /dev/null --write-out '%{url_effective}' 'https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/latest') || fail 'cannot resolve latest release'
-  case "$latest_url" in https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/tag/*) version=${latest_url##*/} ;; *) fail 'unexpected latest release URL' ;; esac
+  version=$(latest_release)
   printf 'Latest release: %s\n' "$version" >&2
 fi
 if [ -n "$version" ]; then
@@ -58,17 +105,8 @@ if [ -n "$version" ]; then
 fi
 [[ "$commit" =~ ^[0-9a-f]{40}$ ]] || fail 'commit must be 40 lowercase hexadecimal characters'
 release_asset=0
-if [ -z "$sha" ]; then
-  [ -n "$version" ] || fail '--sha256 is required with --commit'
-  trust_file=${AI_FRAMEWORK_TRUST_FILE:-${XDG_CONFIG_HOME:-${HOME:?HOME is required}/.config}/ai-framework/trusted-releases}
-  [ -f "$trust_file" ] && [ ! -L "$trust_file" ] || fail "trusted release file missing: $trust_file; see README"
-  trusted=$(awk -v v="$version" '$1 == v { count++; if (NF == 3) value=$2 " " $3 } END { if (count == 1) print value }' "$trust_file")
-  [ -n "$trusted" ] || fail "missing or duplicate trusted entry for $version in $trust_file"
-  read -r trusted_commit sha <<< "$trusted"
-  [[ "$trusted_commit" =~ ^[0-9a-f]{40}$ ]] && [ "$trusted_commit" = "$commit" ] || fail 'release tag does not match the independently trusted commit'
-  release_asset=1
-fi
-[[ "$sha" =~ ^[0-9a-f]{64}$ ]] || fail 'SHA-256 must be 64 lowercase hexadecimal characters'
+[ -n "$sha" ] || [ -n "$version" ] || fail '--sha256 is required with --commit'
+[ -z "$sha" ] || [[ "$sha" =~ ^[0-9a-f]{64}$ ]] || fail 'SHA-256 must be 64 lowercase hexadecimal characters'
 [ ! -L "$project" ] || fail 'project is a symlink'
 [ ! -e "$project" ] || [ -d "$project" ] || fail 'project is not a directory'
 for cmd in unzip awk diff mktemp; do command -v "$cmd" >/dev/null 2>&1 || fail "missing required command: $cmd"; done
@@ -78,6 +116,13 @@ applied=0
 cleanup() { rm -rf -- "$tmp"; }
 trap cleanup EXIT
 mkdir -p "$tmp/new" "$tmp/old"
+if [ -z "$sha" ]; then
+  command -v curl >/dev/null 2>&1 || fail 'curl is required to download release checksums'
+  download_release "$version" SHA256SUMS "$tmp/SHA256SUMS"
+  sha=$(release_digest "$tmp/SHA256SUMS" "framework-$version.zip")
+  release_asset=1
+  printf 'Using GitHub release checksum for %s (integrity only).\n' "$version" >&2
+fi
 if [ -n "$archive" ]; then
   [ -f "$archive" ] || fail 'archive not found'
   cp -- "$archive" "$tmp/archive.zip"
