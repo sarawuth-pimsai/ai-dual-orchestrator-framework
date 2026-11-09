@@ -4,8 +4,8 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/framework-shell-test.XXXXXXXX")
 trap 'rm -rf "$tmp"' EXIT
 cli="$root/bin/ai-framework"
-[ "$("$cli" --version)" = 'ai-framework 1.3.0-dev' ]
-[ "$("$cli" version)" = 'ai-framework 1.3.0-dev' ]
+[ "$("$cli" --version)" = 'ai-framework 1.3.0' ]
+[ "$("$cli" version)" = 'ai-framework 1.3.0' ]
 if "$cli" --version unexpected >/dev/null 2>&1; then exit 1; fi
 mkdir -p "$tmp/source/framework"
 cp "$root/AGENTS.md" "$root/GOVERNANCE.md" "$root/USAGE.md" "$tmp/source/framework/"

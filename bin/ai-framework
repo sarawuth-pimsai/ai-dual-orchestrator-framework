@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Bootstrap from a verified archive. Requires Bash, curl, unzip, sha256sum or shasum, and standard Unix tools.
 set -eu
-cli_version='1.3.0-dev'
+cli_version='1.3.0'
 fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 hash() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | awk '{print $1}'; else shasum -a 256 "$1" | awk '{print $1}'; fi; }
 usage() { printf '%s\n' 'Usage: ai-framework --version | version' '       ai-framework init project DIR [--commit SHA | --version TAG] [--sha256 DIGEST] [--archive ZIP]' '       ai-framework framework update DIR [--commit SHA | --version TAG] [--sha256 DIGEST] [--archive ZIP]' '       Defaults to the latest release; without --sha256 an independently verified trust file is required.'; }
