@@ -45,6 +45,8 @@ Run `ai-framework --version` (or `ai-framework version`) to show the CLI version
 
 CLI v1.5.0 provides `ai --help`, `ai update`, `ai init project [DIR]` and `ai project update [DIR]`. Omit `DIR` to use the current directory. `ai update` updates only the installed CLI, after confirmation; project updates preview a diff and require their own confirmation. The `ai framework update` name is not supported in CLI v1.4.0 or newer. CLI v1.4.0 and earlier do not support `ai update` or automatic release checksums; see the [Thai guide](GUIDE.th.md) for version-specific instructions.
 
+To upgrade the CLI from v1.4.0 or earlier, first download the [v1.5.0 CLI asset](https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/tag/v1.5.0), verify it and replace the installed CLI manually; those older releases have no `ai update` command. The [Thai guide](GUIDE.th.md#2-ติดตั้งในโปรเจกต์ใหม่) provides the steps. Updating the CLI does not update a project.
+
 For a release tag, CLI v1.5.0 downloads the GitHub release's `SHA256SUMS` and matching ZIP over HTTPS and verifies the ZIP before making changes. This removes the per-release trust-file setup. The checksum and archive come from the same source: this verifies integrity, not independent authenticity. Review the release and use an independently obtained `--sha256` if stronger source verification is needed. With `--commit`, a 40-character commit, `--sha256` and optionally `--archive` provide a pinned, offline-capable route. The archive digest alone does not prove an arbitrary local ZIP corresponds to the named commit.
 
 ```sh

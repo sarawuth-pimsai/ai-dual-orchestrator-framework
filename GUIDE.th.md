@@ -1,6 +1,6 @@
 # คู่มือใช้งาน AI Dual-Orchestrator Framework
 
-คู่มือนี้อธิบายการติดตั้งและใช้งาน framework กับโปรเจกต์ของคุณ โดยใช้ release `v1.4.0` เป็นตัวอย่าง Framework เป็นชุดคำแนะนำและเอกสาร ไม่ใช่ระบบที่เปิด agent หรือส่งงานระหว่าง GPT กับ Claude ให้อัตโนมัติ
+คู่มือนี้อธิบายการติดตั้งและใช้งาน framework กับโปรเจกต์ของคุณ โดยใช้ release `v1.5.0` เป็นตัวอย่าง Framework เป็นชุดคำแนะนำและเอกสาร ไม่ใช่ระบบที่เปิด agent หรือส่งงานระหว่าง GPT กับ Claude ให้อัตโนมัติ
 
 ## 1. บทบาทและลำดับการทำงาน
 
@@ -25,7 +25,25 @@
 
 CLI ตั้งแต่ `v1.5.0` ดาวน์โหลด checksum จาก GitHub Release อัตโนมัติและรองรับ `ai update` ส่วน CLI `v1.4.0` และรุ่นเก่ายังต้องใช้วิธีเดิม
 
-หลังติดตั้ง CLI `v1.5.0` ที่ตรวจสอบแล้วลงใน `PATH` จะใช้คำสั่ง:
+หากยังไม่มี CLI รุ่นนี้ ให้ดาวน์โหลดไฟล์จาก release มาตรวจ checksum ก่อน:
+
+```sh
+curl -fL https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/download/v1.5.0/ai-framework -o /tmp/ai-framework-v1.5.0
+shasum -a 256 /tmp/ai-framework-v1.5.0
+```
+
+ค่า SHA-256 ของไฟล์ CLI ใน release นี้คือ `7e69380f2c738d2cc02398e415c81abe6400d53e66b3d3f3e40ba260a7077b2b` ตรวจสอบค่าจากช่องทางที่เชื่อถือได้แยกจากแหล่งดาวน์โหลดก่อนติดตั้ง หาก `~/.local/bin/ai` มีไฟล์อยู่ คำสั่ง `cp` ด้านล่างจะเขียนทับไฟล์นั้น ให้ตรวจหรือสำรองก่อน:
+
+```sh
+mkdir -p "$HOME/.local/bin"
+cp /tmp/ai-framework-v1.5.0 "$HOME/.local/bin/ai"
+chmod +x "$HOME/.local/bin/ai"
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+`export` มีผลกับ shell ปัจจุบัน หากต้องการใช้จาก shell ใหม่ ให้เพิ่ม `export PATH="$HOME/.local/bin:$PATH"` ในไฟล์ตั้งค่า shell เช่น `~/.zshrc` และเปิด shell ใหม่ ตรวจว่าเรียกไฟล์ที่ต้องการด้วย `which -a ai` จากนั้นเข้าโฟลเดอร์โปรเจกต์ที่ต้องการติดตั้ง
+
+เมื่อ CLI อยู่ใน `PATH` จะใช้คำสั่ง:
 
 ```sh
 ai --help
