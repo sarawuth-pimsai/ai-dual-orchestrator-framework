@@ -4,9 +4,13 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/framework-shell-test.XXXXXXXX")
 trap 'rm -rf "$tmp"' EXIT
 cli="$root/bin/ai-framework"
-[ "$("$cli" --version)" = 'ai-framework 1.3.0' ]
-[ "$("$cli" version)" = 'ai-framework 1.3.0' ]
+[ "$("$cli" --version)" = 'ai-framework 1.4.0' ]
+[ "$("$cli" version)" = 'ai-framework 1.4.0' ]
 if "$cli" --version unexpected >/dev/null 2>&1; then exit 1; fi
+"$cli" --help | rg -q 'project update'
+"$cli" help | rg -q 'init project'
+"$cli" project update --help | rg -q 'confirmation'
+if "$cli" framework update . >/dev/null 2>&1; then exit 1; fi
 mkdir -p "$tmp/source/framework"
 cp "$root/AGENTS.md" "$root/GOVERNANCE.md" "$root/USAGE.md" "$tmp/source/framework/"
 cp -R "$root/roles" "$root/protocols" "$root/templates" "$tmp/source/framework/"
@@ -18,6 +22,11 @@ printf '\nnew version\n' >> "$tmp/source/framework/GOVERNANCE.md"
 h2=$(hash "$tmp/two.zip"); c2=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 run() { "$cli" "$@" >/dev/null; }
 run init project "$tmp/project" --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip"
+mkdir "$tmp/default-dir"
+(cd "$tmp/default-dir" && run init project --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip")
+[ "$(cat "$tmp/default-dir/.ai-framework/VERSION")" = "$c1" ]
+(cd "$tmp/default-dir" && printf 'yes\n' | run project update --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip")
+[ "$(cat "$tmp/default-dir/.ai-framework/VERSION")" = "$c2" ]
 mkdir "$tmp/tagbin"
 cat > "$tmp/tagbin/git" <<EOF
 #!/usr/bin/env bash
@@ -38,7 +47,7 @@ PATH="$tmp/tagbin:$PATH" run init project "$tmp/versioned" --version v1.0.0 --sh
 PATH="$tmp/tagbin:$PATH" run init project "$tmp/latest" --sha256 "$h1" --archive "$tmp/one.zip"
 [ "$(cat "$tmp/latest/.ai-framework/VERSION")" = "$c1" ]
 run init project "$tmp/latest-update" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip"
-printf 'yes\n' | PATH="$tmp/tagbin:$PATH" run framework update "$tmp/latest-update" --sha256 "$h1" --archive "$tmp/one.zip"
+printf 'yes\n' | PATH="$tmp/tagbin:$PATH" run project update "$tmp/latest-update" --sha256 "$h1" --archive "$tmp/one.zip"
 [ "$(cat "$tmp/latest-update/.ai-framework/VERSION")" = "$c1" ]
 printf 'v1.0.0 %s %s\n' "$c1" "$h1" > "$tmp/trusted-releases"
 AI_FRAMEWORK_TRUST_FILE="$tmp/trusted-releases" TEST_RELEASE_ZIP="$tmp/one.zip" PATH="$tmp/tagbin:$PATH" run init project "$tmp/simple"
@@ -58,15 +67,15 @@ if PATH="$tmp/tagbin:$PATH" run init project "$tmp/badversion" --version invalid
 if PATH="$tmp/tagbin:$PATH" run init project "$tmp/both" --version v1.0.0 --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip" 2>/dev/null; then exit 1; fi
 run init project "$tmp/project" --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip"
 printf 'decision\n' > "$tmp/project/decision.md"
-printf 'no\n' | run framework update "$tmp/project" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip"
+printf 'no\n' | run project update "$tmp/project" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip"
 [ "$(cat "$tmp/project/.ai-framework/VERSION")" = "$c1" ]
-printf 'yes\n' | run framework update "$tmp/project" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip"
+printf 'yes\n' | run project update "$tmp/project" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip"
 [ "$(cat "$tmp/project/.ai-framework/VERSION")" = "$c2" ]
-printf 'yes\n' | run framework update "$tmp/project" --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip"
+printf 'yes\n' | run project update "$tmp/project" --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip"
 [ "$(cat "$tmp/project/.ai-framework/VERSION")" = "$c1" ]
 [ "$(cat "$tmp/project/decision.md")" = decision ]
 printf 'local edit\n' > "$tmp/project/AGENTS.md"
-if printf 'yes\n' | run framework update "$tmp/project" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip" 2>/dev/null; then exit 1; fi
+if printf 'yes\n' | run project update "$tmp/project" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip" 2>/dev/null; then exit 1; fi
 [ "$(cat "$tmp/project/AGENTS.md")" = 'local edit' ]
 mkdir "$tmp/conflict"; printf 'existing\n' > "$tmp/conflict/CLAUDE.md"
 if run init project "$tmp/conflict" --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip" 2>/dev/null; then exit 1; fi
@@ -87,7 +96,7 @@ exec "$real_mv" "\$@"
 WRAPPER
 chmod +x "$tmp/fakebin/mv"
 run init project "$tmp/recovery" --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip"
-if printf 'yes\n' | PATH="$tmp/fakebin:$PATH" run framework update "$tmp/recovery" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip" 2>/dev/null; then exit 1; fi
+if printf 'yes\n' | PATH="$tmp/fakebin:$PATH" run project update "$tmp/recovery" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip" 2>/dev/null; then exit 1; fi
 [ "$(cat "$tmp/recovery/.ai-framework/VERSION")" = "$c1" ]
 run init project "$tmp/recovery" --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip"
 printf 'Shell integration tests passed: init, repeat, conflicts, integrity, symlinks, preview/cancel, update, rollback, write recovery.\n'

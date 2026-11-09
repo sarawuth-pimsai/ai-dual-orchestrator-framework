@@ -1,16 +1,41 @@
 #!/usr/bin/env bash
 # Bootstrap from a verified archive. Requires Bash, curl, unzip, sha256sum or shasum, and standard Unix tools.
 set -eu
-cli_version='1.3.0'
+cli_version='1.4.0'
 fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 hash() { if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | awk '{print $1}'; else shasum -a 256 "$1" | awk '{print $1}'; fi; }
-usage() { printf '%s\n' 'Usage: ai-framework --version | version' '       ai-framework init project DIR [--commit SHA | --version TAG] [--sha256 DIGEST] [--archive ZIP]' '       ai-framework framework update DIR [--commit SHA | --version TAG] [--sha256 DIGEST] [--archive ZIP]' '       Defaults to the latest release; without --sha256 an independently verified trust file is required.'; }
+usage() {
+  local name=${0##*/}
+  cat <<EOF
+Usage: $name COMMAND [OPTIONS]
+
+Commands:
+  init project [DIR]   Install framework files into a project (default: current directory).
+  project update [DIR] Update framework files in a project after preview and confirmation.
+  version, --version   Show the CLI version, not the project framework version.
+  help, --help, -h     Show this help.
+
+Project options:
+  --version TAG        Select a release tag.
+  --commit SHA         Select a full 40-character commit instead of a tag.
+  --sha256 DIGEST      Independently trusted SHA-256 of the exact ZIP archive.
+  --archive ZIP        Use a local ZIP archive.
+
+Without --version or --commit, the latest published release is selected.
+Without --sha256, the selected release must be in the trusted-releases file.
+Project updates preview changes and require confirmation. CLI self-update is
+not implemented; project commands do not update the CLI.
+EOF
+}
 if [ "$#" = 1 ]; then
-  case "$1" in --version|version) printf 'ai-framework %s\n' "$cli_version"; exit 0 ;; esac
+  case "$1" in --version|version) printf 'ai-framework %s\n' "$cli_version"; exit 0 ;; --help|-h|help) usage; exit 0 ;; esac
 fi
-[ "$#" -ge 3 ] || { usage >&2; exit 1; }
-case "$1 $2" in 'init project') action=init ;; 'framework update') action=update ;; *) usage >&2; exit 1 ;; esac
-project=$3; shift 3
+[ "$#" -ge 2 ] || { usage >&2; exit 1; }
+case "$1 $2" in 'init project') action=init ;; 'project update') action=update ;; *) usage >&2; exit 1 ;; esac
+shift 2
+if [ "${1:-}" = '--help' ] || [ "${1:-}" = '-h' ]; then [ "$#" = 1 ] || fail 'help takes no other options'; usage; exit 0; fi
+project=.
+if [ "$#" -gt 0 ]; then case "$1" in -*) ;; *) project=$1; shift ;; esac; fi
 commit= version= sha= archive=
 while [ "$#" -gt 0 ]; do
   [ "$#" -ge 2 ] || fail 'option requires a value'

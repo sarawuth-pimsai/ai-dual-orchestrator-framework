@@ -94,6 +94,8 @@ cd /path/to/your-project
 
 CLI ตั้งแต่ `v1.3.0` รองรับ `ai --version` หรือ `ai version` เมื่อไฟล์คำสั่งชื่อ `ai` (ถ้าใช้ชื่อ `ai-framework` ให้ใช้ชื่อนั้นแทน) โดยไม่ต้องเชื่อมต่ออินเทอร์เน็ต CLI ใน release `v1.2.0` และก่อนหน้ายังไม่รองรับคำสั่งนี้
 
+CLI ตั้งแต่ `v1.4.0` รองรับ `ai --help` หรือ `ai help` และใช้ `ai project update` เพื่ออัปเดตโปรเจกต์ โดยละ path ได้เมื่อใช้โฟลเดอร์ปัจจุบัน คำสั่ง `ai framework update` ใช้ไม่ได้ตั้งแต่รุ่นนี้ แต่ release ถึง `v1.3.0` ยังใช้ชื่อเดิมตามตัวอย่างในหัวข้ออัปเดตด้านล่าง ส่วน `ai update` สำหรับอัปเดต CLI ยังไม่ได้พัฒนา
+
 เวอร์ชัน CLI แยกจาก framework ที่ติดตั้งในโปรเจกต์ ตรวจ commit ที่โปรเจกต์ใช้อยู่ด้วย `cat .ai-framework/VERSION` จากโฟลเดอร์โปรเจกต์
 
 ## 3. เตรียมข้อมูลโปรเจกต์
@@ -169,6 +171,6 @@ pm status — รวม milestone, dependencies, critical path และคว�
   --archive "$HOME/ai-framework-releases/v1.1.0/framework-v1.1.0.zip"
 ```
 
-ตรวจ diff แล้วพิมพ์ `yes` เพื่อยืนยัน หรือปฏิเสธเพื่อยกเลิก การย้อนเวอร์ชันใช้ `framework update` กับ tag/commit และ ZIP ของเวอร์ชันก่อนหน้า เก็บ ZIP และ checksum เดิมไว้ สำรองโปรเจกต์ก่อนอัปเดต: write error ปกติมีการพยายาม rollback แต่การหยุดกลางคันหรือเครื่องขัดข้องอาจต้องกู้เอง
+ตรวจ diff แล้วพิมพ์ `yes` เพื่อยืนยัน หรือปฏิเสธเพื่อยกเลิก การย้อนเวอร์ชันใช้ `project update` ใน CLI v1.4.0 ขึ้นไป หรือ `framework update` ใน CLI รุ่นเก่า พร้อม tag/commit และ ZIP ของเวอร์ชันก่อนหน้า เก็บ ZIP และ checksum เดิมไว้ สำรองโปรเจกต์ก่อนอัปเดต: write error ปกติมีการพยายาม rollback แต่การหยุดกลางคันหรือเครื่องขัดข้องอาจต้องกู้เอง
 
 หากพบ `managed files were modified` ให้ตรวจและจัดการไฟล์ที่เปลี่ยนก่อน ระบบไม่เขียนทับโดยอัตโนมัติ หากพบ SHA mismatch ให้ตรวจ ZIP และ checksum ที่เชื่อถือได้ใหม่ Python CLI รุ่นเดิมใช้ schema 1 และอัปเดตข้ามกับ shell schema 2 ไม่ได้ ต้องสำรองและย้ายด้วยตนเอง ดู [README](README.md) และ [ARCHITECTURE_BOOTSTRAP.md](ARCHITECTURE_BOOTSTRAP.md)

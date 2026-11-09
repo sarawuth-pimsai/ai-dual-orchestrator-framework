@@ -43,25 +43,27 @@ The shell CLI installs project entry points and a fixed subset of the framework 
 
 Run `ai-framework --version` (or `ai-framework version`) to show the CLI version without network access. If the executable is named `ai`, use `ai --version`. This reports the CLI version, not the framework commit installed in a project; inspect `.ai-framework/VERSION` in the project for that commit. Published CLI v1.2.0 and earlier do not support this command.
 
+CLI v1.4.0 provides `ai --help` and `ai help`. Use `ai init project [DIR]` to install and `ai project update [DIR]` to update project files; omitting `DIR` selects the current directory. `ai framework update` is not supported from v1.4.0. Published releases through v1.3.0 still use `ai framework update DIR`. CLI self-update (`ai update`) is not implemented; project updates do not update the CLI.
+
 Obtain a full 40-character framework commit and the SHA-256 of the **exact ZIP archive** through a trusted channel. For a private GitHub repository set `GITHUB_TOKEN` to a token with repository read access; keep it out of shell history and project files. The CLI fetches the commit-specific GitHub ZIP over HTTPS, or use `--archive /path/to/framework.zip` for a previously downloaded archive. The supplied digest must match the exact ZIP bytes. Do not trust a checksum obtained solely from the same unverified source as the archive.
 
 ```sh
 ./ai-framework init project /path/to/project --commit FULL_40_CHAR_COMMIT --sha256 TRUSTED_64_CHAR_SHA256
-./ai-framework framework update /path/to/project --commit NEW_40_CHAR_COMMIT --sha256 TRUSTED_64_CHAR_SHA256
+./ai-framework project update /path/to/project --commit NEW_40_CHAR_COMMIT --sha256 TRUSTED_64_CHAR_SHA256
 ```
 
 Alternatively, use a release tag such as `--version v1.0.0` in place of `--commit`. This requires Git and network access to resolve the tag to a commit; the resolved commit is recorded in the project. Verify that the tag points to the intended commit through a trusted channel, and provide the trusted SHA-256 of that commit's exact ZIP. Tags can move, so a tag name alone is not an immutable pin. For example:
 
 ```sh
 ./ai-framework init project . --version v1.0.0 --sha256 TRUSTED_64_CHAR_SHA256
-./ai-framework framework update . --version v1.1.0 --sha256 TRUSTED_64_CHAR_SHA256
+./ai-framework project update . --version v1.1.0 --sha256 TRUSTED_64_CHAR_SHA256
 ```
 
 If neither `--version` nor `--commit` is supplied, the CLI resolves GitHub's latest published release for this public repository, then resolves its tag to a commit. This requires `curl`, Git and network access even when `--archive` is supplied. For reproducibility or offline use, pin an independently verified `--commit` and use `--archive`.
 
 ```sh
 ./ai-framework init project . --sha256 TRUSTED_LATEST_ZIP_SHA256 --archive /path/to/latest-release.zip
-./ai-framework framework update . --sha256 TRUSTED_LATEST_ZIP_SHA256 --archive /path/to/latest-release.zip
+./ai-framework project update . --sha256 TRUSTED_LATEST_ZIP_SHA256 --archive /path/to/latest-release.zip
 ```
 
 For shorter commands, install a trusted copy of the current CLI into a directory on `PATH`, and create `${XDG_CONFIG_HOME:-$HOME/.config}/ai-framework/trusted-releases`. Each line must contain a release tag, its full commit, and the SHA-256 of the exact `framework-TAG.zip` release asset, separated by spaces. Independently authenticate the commit and digest before recording them; do not treat a checksum from the same unverified source as independent authentication. See the [Thai guide](GUIDE.th.md) for a complete CLI download and setup example. Before the following example, check for an existing CLI because `cp` overwrites it; after verifying the values for `v1.1.0`:
@@ -79,11 +81,11 @@ Add the PATH setting to your shell configuration if needed. Use an editor to add
 v1.1.0 3685cb76c8c2c71679ab7b809702a8799ff379ab 7fccbeff9b3e11906b2083049334485b903fc002bc29bc224002d4e9fdcbab37
 ```
 
-You can then run `ai-framework init project .` or `ai-framework framework update .`; the CLI checks the resolved tag against the recorded commit, downloads the named release ZIP and checks its digest. If a newer release has no trusted entry, the CLI stops without modifying the project until its commit and digest are independently verified and added. If specifying `--archive` without `--sha256`, it must match the trusted release asset bytes. You can use `AI_FRAMEWORK_TRUST_FILE` to choose a different trust file. Direct `--commit` use still requires `--sha256`.
+You can then run `ai-framework init project .` or `ai-framework project update .`; the CLI checks the resolved tag against the recorded commit, downloads the named release ZIP and checks its digest. If a newer release has no trusted entry, the CLI stops without modifying the project until its commit and digest are independently verified and added. If specifying `--archive` without `--sha256`, it must match the trusted release asset bytes. You can use `AI_FRAMEWORK_TRUST_FILE` to choose a different trust file. Direct `--commit` use still requires `--sha256`.
 
 The previously published `v1.1.0` CLI does not support the latest-release default or the trust file; these require the newer CLI.
 
-`init` refuses existing managed paths and is safe to repeat with identical files. Move or reconcile existing instructions yourself before initialization; the tool never silently overwrites them. Update checks configuration compatibility and managed file hashes, shows a diff, and requires the operator to type `yes`. Local edits to managed files block updates and must be reconciled first. To restore an earlier version, run `framework update` with its previous commit and trusted archive digest, review the diff and confirm. Keep the older archive if GitHub serves different ZIP bytes later. Save a project backup or use version control before updating: normal write errors trigger rollback, but an interruption or machine failure may require manual recovery.
+`init` refuses existing managed paths and is safe to repeat with identical files. Move or reconcile existing instructions yourself before initialization; the tool never silently overwrites them. Update checks configuration compatibility and managed file hashes, shows a diff, and requires the operator to type `yes`. Local edits to managed files block updates and must be reconciled first. To restore an earlier version, run `project update` with its previous commit and trusted archive digest, review the diff and confirm. Keep the older archive if GitHub serves different ZIP bytes later. Save a project backup or use version control before updating: normal write errors trigger rollback, but an interruption or machine failure may require manual recovery.
 
 The generated `AGENTS.md` and `CLAUDE.md` point to `.ai-framework/framework/`; the project owns its own context, decisions and handoffs. `.ai-framework/config.yaml` records schema 2 and the pin, `.ai-framework/MANIFEST` tracks managed file hashes, and `.ai-framework/VERSION` records the commit. Commit these files as appropriate for the project. The archive digest verifies bytes against the independently supplied digest; it does not prove an arbitrary local ZIP corresponds to the stated Git commit. See `ARCHITECTURE_BOOTSTRAP.md` for security and recovery limitations.
 
