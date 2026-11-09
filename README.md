@@ -41,6 +41,8 @@ Business GPT, Tech/PO Claude and PM use the shared [Founder communication templa
 
 The shell CLI installs project entry points and a fixed subset of the framework documents without a submodule, Python, or a framework clone inside the project. It needs Bash, `unzip`, `curl` for downloads, `sha256sum` or `shasum`, and standard Unix utilities. macOS and Linux are supported when these tools are present; native Windows requires a compatible Unix environment. Obtain `bin/ai-framework` from a trusted copy of this repository and run `chmod +x ai-framework`. It is a local tool, not an agent runtime. See [LICENSE](LICENSE) for usage terms.
 
+Run `ai-framework --version` (or `ai-framework version`) to show the CLI version without network access. If the executable is named `ai`, use `ai --version`. This reports the CLI version, not the framework commit installed in a project; inspect `.ai-framework/VERSION` in the project for that commit. The `1.3.0-dev` label identifies this development CLI and does not indicate a published release. Published CLI v1.2.0 and earlier do not support this command.
+
 Obtain a full 40-character framework commit and the SHA-256 of the **exact ZIP archive** through a trusted channel. For a private GitHub repository set `GITHUB_TOKEN` to a token with repository read access; keep it out of shell history and project files. The CLI fetches the commit-specific GitHub ZIP over HTTPS, or use `--archive /path/to/framework.zip` for a previously downloaded archive. The supplied digest must match the exact ZIP bytes. Do not trust a checksum obtained solely from the same unverified source as the archive.
 
 ```sh
