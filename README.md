@@ -1,6 +1,6 @@
 # AI Dual-Orchestrator Framework
 
-A reusable, project-agnostic governance and delivery framework for a Founder, GPT Business Orchestrator, Claude Tech Orchestrator, and a cross-functional PM support role.
+A reusable, project-agnostic governance and delivery framework for a Founder, a Business Orchestrator, a Requirements role, an Implementation role, and a cross-functional PM support role.
 
 **Status:** Initial reusable framework template; no agent runtime, scheduler, external integrations or autonomous execution is installed by these files.
 
@@ -8,32 +8,36 @@ A reusable, project-agnostic governance and delivery framework for a Founder, GP
 
 ## How it works
 
-1. Founder gives requirements directly to Tech/PO in Claude.
-2. Tech/PO clarifies requirements and requests Business/GPT input when UX, legal, finance or other business expertise is needed.
-3. Founder approves product decisions and the implementation scope. Tech coordinates authorized delivery, QA and evidence.
-4. Business and Tech report using a shared template, including copy-ready handoffs and PR actions when relevant. Founder decides release.
+1. Founder gives requirements directly to the Requirements role.
+2. Requirements clarifies them and requests Business input when UX, legal, finance or other business expertise is needed, and proposes a risk tier.
+3. Founder approves product decisions, the risk tier, technical choices proposed by Implementation, and the implementation scope.
+4. Implementation writes the code with unit and integration tests; Requirements writes and runs end-to-end scripts from Business scenarios; Business judges whether results match the business need.
+5. Every role reports using a shared template, including copy-ready handoffs and PR actions when relevant, and every PR uses the seven-heading description template. Founder merges and decides release.
 
-Business and Tech are separate sessions. Unless an integration is actually configured, the Founder relays handoffs and the receiver must acknowledge them; an issue comment alone does not dispatch an agent.
+Business, Requirements and Implementation are separate sessions. Unless an integration is actually configured, the Founder relays handoffs and the receiver must acknowledge them; an issue comment alone does not dispatch an agent.
 
 ## Topology
 
 Founder (approves strategic, product, commercial, implementation and release decisions)
 
 - Business Orchestrator (GPT): UX/UI, Marketing, Finance, Accounting & Tax, Legal & Compliance and business input to Product.
-- Tech Orchestrator (Claude): Product Owner (PO), Architecture/SA, Tech Lead function, Development, QA and Security.
-- PM Agent: reconciles both plans, monitors critical path, dependencies, risks and verified progress. PM is not a third orchestrator and cannot approve or dispatch cross-domain specialists.
+- Requirements role: Product Owner (PO), product contract and feature IDs, acceptance criteria, risk-tier proposals, and the end-to-end test scripts (written and run).
+- Implementation role: code, unit and integration tests, technical-choice and ADR proposals, and the code repository's architecture rules.
+- PM Agent: reconciles all plans, monitors critical path, dependencies, risks and verified progress. PM is not a third orchestrator and cannot approve or dispatch cross-domain specialists.
 
-Both orchestrators are peers, report to Founder and coordinate via one project's source of truth. The framework repo contains reusable policy only; each **adopting project** owns its own decisions, issues, artifacts and code. Do not place project-specific confidential information in this framework.
+The three roles besides PM are peers, report to Founder and coordinate via one project's source of truth. The framework repo contains reusable policy only; each **adopting project** owns its own decisions, issues, artifacts and code. Do not place project-specific confidential information in this framework.
 
-Tech PO receives requirements directly from Founder and maintains the canonical product requirements, feature IDs and acceptance criteria. When business specialist input is needed, PO hands off to Business for UX/UI, legal or other relevant work. Founder retains approval of product scope, business decisions, implementation and release; PO ownership does not delegate those approvals.
+The Requirements role receives requirements directly from Founder and maintains the canonical product requirements, feature IDs and acceptance criteria. When business specialist input is needed, it hands off to Business for UX/UI, legal or other relevant work. Founder retains approval of product scope, risk tier, technical choices, business decisions, implementation and release; role ownership does not delegate those approvals.
 
-Business GPT, Tech/PO Claude and PM use the shared [Founder communication template](templates/STATUS_REPORT.md) for work reports and decisions; simple answers remain concise.
+**Checks before the Founder merges** have three levels: code (unit and integration tests by Implementation), business and user (automated end-to-end tests by Requirements, from Business scenarios). The code-level tests replace the independent code review of earlier versions; this removes an independent gate and the author's tests check the author's own understanding. The Founder accepted this; no security checklist is removed. Work issues live in the code repository, decisions and requirements in the documents repository, and every reference is pinned by commit. Where a role may not write in a repository, acknowledgments are relayed by the Founder (see `protocols/HANDOFF_PROTOCOL.md`).
+
+Business, Requirements, Implementation and PM use the shared [Founder communication template](templates/STATUS_REPORT.md) for work reports and decisions; simple answers remain concise.
 
 ## Quick start
 
 1. Download a trusted CLI from a [release](https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases) and install the framework into the **adopting project**, not this framework repository. See the [Thai guide](GUIDE.th.md#2-ติดตั้งในโปรเจกต์ใหม่) for complete commands.
 2. Copy `.ai-framework/framework/templates/PROJECT_BOOTSTRAP.md` to a project-owned location and record the canonical repository, board, decision records and access. Keep project-specific context outside managed framework files.
-3. Open Claude Code in the project and start the Tech role using `.ai-framework/framework/roles/TECH_ORCHESTRATOR.md`. Give PO your requirements; implementation requires explicit Founder authorization.
+3. Open Claude Code in the project and start the Requirements role using `.ai-framework/framework/roles/REQUIREMENTS.md`; open a separate session for the Implementation role using `.ai-framework/framework/roles/IMPLEMENTATION.md`. Give Requirements your requirements; implementation requires explicit Founder authorization.
 4. Open a separate GPT Business session when needed. Relay handoffs and require real receiver acknowledgment. Use a separate PM session if integrated tracking is needed.
 5. Review evidence, approvals and PR readiness; approve release separately. See [Starting sessions](USAGE.md) and the [Thai guide](GUIDE.th.md) for prompts and examples.
 
@@ -58,7 +62,7 @@ ai init project . --commit FULL_40_CHAR_COMMIT --sha256 TRUSTED_64_CHAR_SHA256 -
 
 `ai update` stages the replacement in the CLI's directory, verifies its checksum, asks for confirmation, and replaces the executable by rename. It refuses symlinked executables, checks that the original did not change after preview, and does not touch projects. If the CLI is installed through a package manager, use that manager instead. A copy of the original or an independently verified release asset should be retained if manual rollback is needed; abrupt interruption or filesystem failure can still require recovery. Git, curl and network access are required when resolving a project release. The older v1.4.0 CLI still requires the separately configured trust file for short commands.
 
-`init` refuses existing managed paths and is safe to repeat with identical files. Move or reconcile existing instructions yourself before initialization; the tool never silently overwrites them. Update checks configuration compatibility and managed file hashes, shows a diff, and requires the operator to type `yes`. Local edits to managed files block updates and must be reconciled first. To restore an earlier version, run `project update` with its previous commit and trusted archive digest, review the diff and confirm. Keep the older archive if GitHub serves different ZIP bytes later. Save a project backup or use version control before updating: normal write errors trigger rollback, but an interruption or machine failure may require manual recovery.
+`init` refuses existing managed paths and is safe to repeat with identical files. Move or reconcile existing instructions yourself before initialization; the tool never silently overwrites them. Update checks configuration compatibility and managed file hashes, shows a diff, and requires the operator to type `yes`. Local edits to managed files block updates and must be reconciled first. The set of managed files may change between framework versions: update verifies the files the project's own `MANIFEST` names, creates newly managed files (refusing if a project file already exists at that path), and removes retired managed files only if they are unmodified. A CLI older than the framework version being installed may not know the new file list and stops without changes; update the CLI first with `ai update`. To restore an earlier version, run `project update` with its previous commit and trusted archive digest, review the diff and confirm. Keep the older archive if GitHub serves different ZIP bytes later. Save a project backup or use version control before updating: normal write errors trigger rollback, but an interruption or machine failure may require manual recovery.
 
 The generated `AGENTS.md` and `CLAUDE.md` point to `.ai-framework/framework/`; the project owns its own context, decisions and handoffs. `.ai-framework/config.yaml` records schema 2 and the pin, `.ai-framework/MANIFEST` tracks managed file hashes, and `.ai-framework/VERSION` records the commit. Commit these files as appropriate for the project. The archive digest verifies bytes against the independently supplied digest; it does not prove an arbitrary local ZIP corresponds to the stated Git commit. See `ARCHITECTURE_BOOTSTRAP.md` for security and recovery limitations.
 
@@ -67,17 +71,18 @@ Troubleshooting: a 404 or authentication error requires verified private-reposit
 ## Commands (natural language, not installed CLI commands)
 
 - `business status` / `business continue`
-- `tech status` / `tech plan` / `tech continue`
+- `requirements status` / `requirements plan` / `requirements continue`
+- `implementation status` / `implementation plan` / `implementation continue`
 - `pm status` / `pm plan` / `pm risks` / `pm handoffs`
 
 ## Documents
 
 - `AGENTS.md`: shared startup and safety rules.
 - `GOVERNANCE.md`: authority and lifecycle.
-- `roles/`: role instructions for GPT, Claude and PM.
+- `roles/`: role instructions for Business, Requirements, Implementation and PM.
 - `roles/SPECIALISTS.md`: specialist ownership and boundaries.
 - `protocols/`: technical execution, handoff and tracking protocols.
-- `templates/`: reusable project documents.
+- `templates/`: reusable project documents, including the seven-heading pull request description template.
 - `USAGE.md`: session startup for ChatGPT, Claude Code and Codex.
 - `GUIDE.th.md`: Thai installation, workflow, handoff, PR and update guide (read from this repository; not included in the bootstrap-managed document set).
 - `RELEASING.md`: this repository's release procedure and Founder delegation.

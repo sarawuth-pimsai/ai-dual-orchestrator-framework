@@ -8,6 +8,6 @@ Acceptance criteria: <checklist>
 Dependencies: <links>
 Approval gate: <status + evidence>
 Target date: <date>
-Receiver acknowledgment: <link or NONE>
+Receiver acknowledgment: <link, or "via Founder relay" with date and relayed text, or NONE>
 Evidence returned: <links or NONE>
 Next owner / next action: <role + step>

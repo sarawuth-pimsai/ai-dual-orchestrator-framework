@@ -116,4 +116,36 @@ run init project "$tmp/recovery" --commit "$c1" --sha256 "$h1" --archive "$tmp/o
 if printf 'yes\n' | PATH="$tmp/fakebin:$PATH" run project update "$tmp/recovery" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip" 2>/dev/null; then exit 1; fi
 [ "$(cat "$tmp/recovery/.ai-framework/VERSION")" = "$c1" ]
 run init project "$tmp/recovery" --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip"
-printf 'Shell integration tests passed: init, repeat, conflicts, integrity, symlinks, preview/cancel, update, rollback, write recovery.\n'
+# Update across a changed managed list: simulate a project installed when TECH_ORCHESTRATOR.md was managed
+# and the newest role/template files did not exist.
+legacy="$tmp/legacy"
+run init project "$legacy" --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip"
+fw=.ai-framework/framework
+rm "$legacy/$fw/roles/REQUIREMENTS.md" "$legacy/$fw/roles/IMPLEMENTATION.md" "$legacy/$fw/templates/PULL_REQUEST_TEMPLATE.md"
+printf 'old role\n' > "$legacy/$fw/roles/TECH_ORCHESTRATOR.md"
+grep -v -e 'roles/REQUIREMENTS.md' -e 'roles/IMPLEMENTATION.md' -e 'PULL_REQUEST_TEMPLATE.md' "$legacy/.ai-framework/MANIFEST" > "$tmp/manifest.new"
+printf '%s  %s/roles/TECH_ORCHESTRATOR.md\n' "$(hash "$legacy/$fw/roles/TECH_ORCHESTRATOR.md")" "$fw" >> "$tmp/manifest.new"
+cp "$tmp/manifest.new" "$legacy/.ai-framework/MANIFEST"
+# A locally edited retired file blocks the update and nothing changes.
+printf 'edited\n' >> "$legacy/$fw/roles/TECH_ORCHESTRATOR.md"
+if printf 'yes\n' | run project update "$legacy" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip" 2>/dev/null; then exit 1; fi
+[ ! -e "$legacy/$fw/roles/REQUIREMENTS.md" ]
+printf 'old role\n' > "$legacy/$fw/roles/TECH_ORCHESTRATOR.md"
+# A pre-existing file at a newly managed path blocks the update.
+printf 'project file\n' > "$legacy/$fw/roles/IMPLEMENTATION.md"
+if printf 'yes\n' | run project update "$legacy" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip" 2>/dev/null; then exit 1; fi
+[ "$(cat "$legacy/$fw/roles/IMPLEMENTATION.md")" = 'project file' ]
+rm "$legacy/$fw/roles/IMPLEMENTATION.md"
+# A cancelled update changes nothing; a confirmed update adds new files and removes the retired one.
+printf 'no\n' | run project update "$legacy" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip"
+[ -f "$legacy/$fw/roles/TECH_ORCHESTRATOR.md" ] && [ ! -e "$legacy/$fw/roles/REQUIREMENTS.md" ]
+printf 'yes\n' | run project update "$legacy" --commit "$c2" --sha256 "$h2" --archive "$tmp/two.zip"
+[ ! -e "$legacy/$fw/roles/TECH_ORCHESTRATOR.md" ]
+[ -f "$legacy/$fw/roles/REQUIREMENTS.md" ] && [ -f "$legacy/$fw/roles/IMPLEMENTATION.md" ] && [ -f "$legacy/$fw/templates/PULL_REQUEST_TEMPLATE.md" ]
+! grep -q TECH_ORCHESTRATOR "$legacy/.ai-framework/MANIFEST"
+grep -q 'roles/REQUIREMENTS.md' "$legacy/.ai-framework/MANIFEST"
+# An unknown path in the old MANIFEST is rejected.
+printf '%s  %s\n' "$(hash "$legacy/AGENTS.md")" "$fw/unknown.md" >> "$legacy/.ai-framework/MANIFEST"
+cp "$legacy/AGENTS.md" "$legacy/$fw/unknown.md"
+if printf 'yes\n' | run project update "$legacy" --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip" 2>/dev/null; then exit 1; fi
+printf 'Shell integration tests passed: init, repeat, conflicts, integrity, symlinks, preview/cancel, update, rollback, write recovery, changed managed file list.\n'

@@ -151,7 +151,8 @@ AGENTS.md
 GOVERNANCE.md
 USAGE.md
 roles/BUSINESS_ORCHESTRATOR.md
-roles/TECH_ORCHESTRATOR.md
+roles/REQUIREMENTS.md
+roles/IMPLEMENTATION.md
 roles/PM_AGENT.md
 roles/SPECIALISTS.md
 protocols/HANDOFF_PROTOCOL.md
@@ -163,6 +164,7 @@ templates/HANDOFF.md
 templates/TASK_CONTRACT.md
 templates/STATUS_REPORT.md
 templates/RISK_REGISTER.md
+templates/PULL_REQUEST_TEMPLATE.md
 DOCS
 while IFS= read -r doc; do
   # Only one top-level directory is allowed before the expected document path.
@@ -182,16 +184,19 @@ cat > "$tmp/new/AGENTS.md" <<'TEXT'
 
 Read `.ai-framework/framework/AGENTS.md`, `GOVERNANCE.md` and relevant role and protocol files under `.ai-framework/framework/` before acting. Identify this project's canonical repository, board and approved decisions. Project context and decisions belong in this project.
 
-Business GPT and Tech Claude are peers; PM supports both. Founder retains final approval. A handoff requires actual receiver acknowledgment. Do not infer agent execution from a GitHub comment.
+Business, Requirements and Implementation are peer roles in separate sessions; PM supports all. Founder retains final approval. A handoff requires actual receiver acknowledgment. Do not infer agent execution from a GitHub comment.
 TEXT
 cp "$tmp/new/AGENTS.md" "$tmp/new/CLAUDE.md"
-printf '\nFor Tech, read `.ai-framework/framework/roles/TECH_ORCHESTRATOR.md`.\n' >> "$tmp/new/CLAUDE.md"
+printf '\nFor Requirements, read `.ai-framework/framework/roles/REQUIREMENTS.md`. For Implementation, read `.ai-framework/framework/roles/IMPLEMENTATION.md`.\n' >> "$tmp/new/CLAUDE.md"
 printf '%s\n' "$commit" > "$tmp/new/.ai-framework/VERSION"
 { printf '%s\n' AGENTS.md CLAUDE.md .ai-framework/VERSION; while IFS= read -r doc; do printf '.ai-framework/framework/%s\n' "$doc"; done < "$tmp/docs"; } > "$tmp/managed"
 : > "$tmp/new/.ai-framework/MANIFEST"
 while IFS= read -r path; do printf '%s  %s\n' "$(hash "$tmp/new/$path")" "$path" >> "$tmp/new/.ai-framework/MANIFEST"; done < "$tmp/managed"
 printf 'schema: 2\nrepository: sarawuth-pimsai/ai-dual-orchestrator-framework\ncommit: %s\narchive_sha256: %s\n' "$commit" "$sha" > "$tmp/new/.ai-framework/config.yaml"
 printf '%s\n' .ai-framework/MANIFEST .ai-framework/config.yaml >> "$tmp/managed"
+# Retired paths: managed by an earlier framework version, removed from this one. Removed on update only if unmodified.
+: > "$tmp/retired"
+printf '%s\n' .ai-framework/framework/roles/TECH_ORCHESTRATOR.md > "$tmp/retired-known"
 # Reject symlinks in every component, including existing parent directories.
 check_path() {
   local p="$project" part rest="$1"
@@ -216,28 +221,44 @@ else
   [[ "$old_commit" =~ ^[0-9a-f]{40}$ && "$old_sha" =~ ^[0-9a-f]{64}$ ]] || fail 'invalid or incompatible config'
   printf 'schema: 2\nrepository: sarawuth-pimsai/ai-dual-orchestrator-framework\ncommit: %s\narchive_sha256: %s\n' "$old_commit" "$old_sha" > "$tmp/expected-config"
   cmp -s "$tmp/expected-config" "$project/.ai-framework/config.yaml" || fail 'incompatible config schema'
-  : > "$tmp/actual-manifest"
+  # The managed list may differ between framework versions, so verify the files the old MANIFEST names.
+  # Every old entry must be a current managed path or a known retired path; unknown paths are rejected.
+  : > "$tmp/actual-manifest"; : > "$tmp/oldpaths"
+  while IFS= read -r line; do
+    [[ "$line" =~ ^[0-9a-f]{64}\ \ (.+)$ ]] || fail 'incompatible MANIFEST format'
+    path=${BASH_REMATCH[1]}
+    if ! grep -Fxq -- "$path" "$tmp/managed" && ! grep -Fxq -- "$path" "$tmp/retired-known"; then fail "MANIFEST names an unknown path: $path"; fi
+    check_path "$path"
+    [ -f "$project/$path" ] || fail "missing managed file: $path"
+    printf '%s\n' "$path" >> "$tmp/oldpaths"
+    printf '%s  %s\n' "$(hash "$project/$path")" "$path" >> "$tmp/actual-manifest"
+  done < "$project/.ai-framework/MANIFEST"
+  cmp -s "$tmp/actual-manifest" "$project/.ai-framework/MANIFEST" || fail 'managed files were modified; reconcile before update'
+  # Retired: in the old MANIFEST but no longer managed. Added: managed now but absent from the old MANIFEST.
+  while IFS= read -r path; do grep -Fxq -- "$path" "$tmp/managed" || printf '%s\n' "$path" >> "$tmp/retired"; done < "$tmp/oldpaths"
   while IFS= read -r path; do
     case "$path" in .ai-framework/MANIFEST|.ai-framework/config.yaml) continue ;; esac
-    [ -f "$project/$path" ] || fail "missing managed file: $path"
-    printf '%s  %s\n' "$(hash "$project/$path")" "$path" >> "$tmp/actual-manifest"
+    grep -Fxq -- "$path" "$tmp/oldpaths" || { [ ! -e "$project/$path" ] || fail "managed path already exists and is not in the old MANIFEST: $path"; }
   done < "$tmp/managed"
-  cmp -s "$tmp/actual-manifest" "$project/.ai-framework/MANIFEST" || fail 'managed files were modified; reconcile before update'
   [ "$(cat "$project/.ai-framework/VERSION")" = "$old_commit" ] || fail 'VERSION does not match config'
 fi
 # Save a complete before-image and presence list for rollback and race detection.
 : > "$tmp/present"
+cat "$tmp/managed" "$tmp/retired" > "$tmp/touched"
 while IFS= read -r path; do
   if [ -f "$project/$path" ]; then mkdir -p "$tmp/old/$(dirname "$path")"; cp "$project/$path" "$tmp/old/$path"; printf '%s\n' "$path" >> "$tmp/present"; fi
-done < "$tmp/managed"
+done < "$tmp/touched"
 if [ "$action" = update ]; then
   changed=0
   while IFS= read -r path; do
-    if ! cmp -s "$tmp/old/$path" "$tmp/new/$path"; then
+    old_file=/dev/null; new_file=/dev/null
+    [ ! -f "$tmp/old/$path" ] || old_file="$tmp/old/$path"
+    [ ! -f "$tmp/new/$path" ] || new_file="$tmp/new/$path"
+    if ! cmp -s "$old_file" "$new_file"; then
       changed=1; printf '\n--- %s ---\n' "$path"
-      diff -u "$tmp/old/$path" "$tmp/new/$path" || [ "$?" = 1 ] || fail 'diff failed'
+      diff -u "$old_file" "$new_file" || [ "$?" = 1 ] || fail 'diff failed'
     fi
-  done < "$tmp/managed"
+  done < "$tmp/touched"
   [ "$changed" = 1 ] || { echo 'Already at requested version; no changes.'; exit 0; }
   printf 'Apply these changes? Type yes: '
   IFS= read -r answer || fail 'confirmation unavailable'
@@ -246,13 +267,13 @@ fi
 while IFS= read -r path; do
   check_path "$path"
   if [ -f "$tmp/old/$path" ]; then cmp -s "$tmp/old/$path" "$project/$path" || fail 'files changed since preview'; else [ ! -e "$project/$path" ] || fail 'files changed since preview'; fi
-done < "$tmp/managed"
+done < "$tmp/touched"
 rollback() {
   if [ "$applied" = 1 ]; then
     printf '%s\n' 'Write failed; attempting rollback.' >&2
     while IFS= read -r path; do
       if [ -f "$tmp/old/$path" ]; then mkdir -p "$project/$(dirname "$path")"; cp "$tmp/old/$path" "$project/$path" || printf 'Restore manually: %s\n' "$path" >&2; else rm -f "$project/$path" || true; fi
-    done < "$tmp/managed"
+    done < "$tmp/touched"
   fi
 }
 trap 'rollback; cleanup' EXIT
@@ -264,5 +285,6 @@ while IFS= read -r path; do
   dest_tmp=$(mktemp "$project/$(dirname "$path")/.ai-framework-write.XXXXXXXX") || fail 'cannot create temporary file'
   cp "$tmp/new/$path" "$dest_tmp" && mv -f "$dest_tmp" "$project/$path" || { rm -f "$dest_tmp"; fail "cannot write $path"; }
 done < "$tmp/managed"
+while IFS= read -r path; do check_path "$path"; rm -f "$project/$path" || fail "cannot remove retired file $path"; done < "$tmp/retired"
 applied=0
 printf '%s complete: %s\n' "$action" "$commit"

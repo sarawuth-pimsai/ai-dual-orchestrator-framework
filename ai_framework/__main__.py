@@ -12,10 +12,13 @@ import urllib.request
 import zipfile
 
 DOCS = ('AGENTS.md', 'GOVERNANCE.md', 'USAGE.md', 'roles/BUSINESS_ORCHESTRATOR.md',
-        'roles/TECH_ORCHESTRATOR.md', 'roles/PM_AGENT.md', 'roles/SPECIALISTS.md',
+        'roles/REQUIREMENTS.md', 'roles/IMPLEMENTATION.md', 'roles/PM_AGENT.md', 'roles/SPECIALISTS.md',
         'protocols/HANDOFF_PROTOCOL.md', 'protocols/TECH_EXECUTION.md', 'protocols/PM_TRACKING.md',
         'templates/PROJECT_BOOTSTRAP.md', 'templates/DECISION_RECORD.md', 'templates/HANDOFF.md',
-        'templates/TASK_CONTRACT.md', 'templates/STATUS_REPORT.md', 'templates/RISK_REGISTER.md')
+        'templates/TASK_CONTRACT.md', 'templates/STATUS_REPORT.md', 'templates/RISK_REGISTER.md',
+        'templates/PULL_REQUEST_TEMPLATE.md')
+# Managed by an earlier framework version and removed from this one; removed on update if unmodified.
+RETIRED = ('.ai-framework/framework/roles/TECH_ORCHESTRATOR.md',)
 CONFIG = '.ai-framework/config.yaml'
 VERSION = '.ai-framework/VERSION'
 SCHEMA = 1
@@ -77,9 +80,9 @@ def render(commit, archive_sha, docs):
     intro = ('# AI Framework project instructions\n\n'
              'Read `.ai-framework/framework/AGENTS.md`, `GOVERNANCE.md` and the relevant role and protocol files under `.ai-framework/framework/` before acting. '
              'Identify this project’s canonical repository, board and approved decisions. Project context and decisions belong in this project.\n\n'
-             'Business GPT and Tech Claude are peers; PM supports both. Founder retains final approval. '
+             'Business, Requirements and Implementation are peer roles in separate sessions; PM supports all. Founder retains final approval. '
              'A handoff requires actual receiver acknowledgment. Do not infer agent execution from a GitHub comment.\n')
-    result = {'AGENTS.md': intro.encode(), 'CLAUDE.md': (intro + '\nFor Tech, read `.ai-framework/framework/roles/TECH_ORCHESTRATOR.md`.\n').encode(),
+    result = {'AGENTS.md': intro.encode(), 'CLAUDE.md': (intro + '\nFor Requirements, read `.ai-framework/framework/roles/REQUIREMENTS.md`. For Implementation, read `.ai-framework/framework/roles/IMPLEMENTATION.md`.\n').encode(),
               VERSION: (commit + '\n').encode()}
     result.update({'.ai-framework/framework/' + k: v for k, v in docs.items()})
     cfg = {'schema': SCHEMA, 'repository': 'sarawuth-pimsai/ai-dual-orchestrator-framework', 'commit': commit,
@@ -95,7 +98,9 @@ def load_config(root):
             raise BootstrapError('incompatible configuration schema or repository')
         check_pin(cfg['commit'], cfg['archive_sha256'])
         allowed = {'AGENTS.md', 'CLAUDE.md', VERSION} | {'.ai-framework/framework/' + d for d in DOCS}
-        if set(cfg['managed_sha256']) != allowed:
+        names = set(cfg['managed_sha256'])
+        # The list may differ between framework versions: require the core files and nothing unknown.
+        if not {'AGENTS.md', 'CLAUDE.md', VERSION} <= names or not names <= allowed | set(RETIRED):
             raise BootstrapError('incompatible managed file list')
         if any(not re.fullmatch(r'[0-9a-f]{64}', x) for x in cfg['managed_sha256'].values()):
             raise BootstrapError('invalid managed file hash')
@@ -118,6 +123,7 @@ def transact(root, before, after):
     if current(root, set(before) | set(after)) != before:
         raise BootstrapError('files changed since preview; retry')
     applied = []
+    retired = sorted(set(before) - set(after))
     try:
         for name, data in after.items():
             p = path_at(root, name)
@@ -136,6 +142,9 @@ def transact(root, before, after):
             finally:
                 temp.unlink(missing_ok=True)
             applied.append(name)
+        for name in retired:
+            path_at(root, name).unlink()
+            applied.append(name)
     except BaseException:
         for name in reversed(applied):
             p = path_at(root, name)
@@ -146,12 +155,12 @@ def transact(root, before, after):
         raise
 
 def preview(before, after):
-    for name in sorted(after):
-        if before.get(name) == after[name]:
+    for name in sorted(set(before) | set(after)):
+        if before.get(name) == after.get(name):
             continue
         print(f'--- {name} ---')
         old = before.get(name, b'').decode('utf-8').splitlines(keepends=True)
-        new = after[name].decode('utf-8').splitlines(keepends=True)
+        new = after.get(name, b'').decode('utf-8').splitlines(keepends=True)
         print(''.join(difflib.unified_diff(old, new, fromfile='current/' + name, tofile='proposed/' + name)), end='')
 
 def run(args):
@@ -169,11 +178,15 @@ def run(args):
             raise BootstrapError('existing managed paths conflict; no files changed: ' + ', '.join(sorted(before)))
     else:
         cfg = load_config(root)
+        old_names = set(cfg['managed_sha256'])
+        before = current(root, set(after) | old_names)
         for name, expected in cfg['managed_sha256'].items():
             if name not in before or digest(before[name]) != expected:
                 raise BootstrapError(f'managed file missing or modified: {name}; preserve and reconcile it before updating')
-        # Re-read config and VERSION as part of the pre-write snapshot.
-        before = current(root, after)
+        for name in set(after) - old_names - {CONFIG}:
+            if name in before:
+                raise BootstrapError(f'managed path already exists and is not in the old configuration: {name}')
+        # Re-read config and VERSION as part of the pre-write snapshot (done above with the old and new paths).
         if before == after:
             print('Already at requested version; no changes.')
             return

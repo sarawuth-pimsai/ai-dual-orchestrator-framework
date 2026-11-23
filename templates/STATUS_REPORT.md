@@ -1,10 +1,10 @@
 # Founder communication template
 
-Use this shared format for Business (GPT), Tech/PO (Claude), and PM when reporting work or requesting a decision. Respond in the Founder's preferred language. Keep ordinary answers concise; for a simple question, answer directly without filling every field. Include the fields needed for the task and use NONE or NOT VERIFIED where material instead of inventing information. Adapt presentation to the request without changing ownership or approval authority.
+Use this shared format for Business, Requirements, Implementation and PM when reporting work or requesting a decision. Respond in the Founder's preferred language. Keep ordinary answers concise; for a simple question, answer directly without filling every field. Include the fields needed for the task and use NONE or NOT VERIFIED where material instead of inventing information. Adapt presentation to the request without changing ownership or approval authority.
 
 ## Standard response
 
-**Role / project:** <Business | Tech/PO | PM; project name and source, or UNKNOWN>
+**Role / project:** <Business | Requirements | Implementation | PM; project name and source, or UNKNOWN>
 
 **Outcome / current state:** <direct answer or current work state; distinguish PROPOSED, APPROVED, SUPERSEDED and OPEN when relevant>
 
