@@ -102,4 +102,48 @@ class BootstrapTests(unittest.TestCase):
         (self.root / '.ai-framework').symlink_to(Path(self.temp.name), target_is_directory=True)
         with self.assertRaises(cli.BootstrapError): cli.run(self.args())
 
+    def legacy_install(self):
+        """Simulate a project installed when the managed list had a retired file and lacked the newest files."""
+        cli.run(self.args())
+        added = '.ai-framework/framework/templates/PULL_REQUEST_TEMPLATE.md'
+        retired = cli.RETIRED[0]
+        (self.root / added).unlink()
+        (self.root / retired).write_text('old role\n')
+        cfgp = self.root / cli.CONFIG
+        cfg = json.loads(cfgp.read_text())
+        del cfg['managed_sha256'][added]
+        cfg['managed_sha256'][retired] = cli.digest(b'old role\n')
+        cfgp.write_text(json.dumps(cfg, indent=2, sort_keys=True) + '\n')
+        return added, retired
+
+    def test_update_adds_new_and_removes_retired_managed_files(self):
+        added, retired = self.legacy_install()
+        with mock.patch('builtins.input', return_value='yes'), contextlib.redirect_stdout(io.StringIO()) as out:
+            cli.run(self.args('update', 'two', 'b' * 40))
+        self.assertTrue((self.root / added).exists())
+        self.assertFalse((self.root / retired).exists())
+        self.assertIn(retired, out.getvalue())
+
+    def test_update_refuses_modified_retired_file_and_preexisting_new_path(self):
+        added, retired = self.legacy_install()
+        (self.root / retired).write_text('my edit\n')
+        with self.assertRaises(cli.BootstrapError): cli.run(self.args('update', 'two', 'b' * 40))
+        self.assertEqual((self.root / retired).read_text(), 'my edit\n')
+        (self.root / retired).write_text('old role\n')
+        (self.root / added).write_text('project file\n')
+        with self.assertRaises(cli.BootstrapError): cli.run(self.args('update', 'two', 'b' * 40))
+        self.assertEqual((self.root / added).read_text(), 'project file\n')
+        self.assertTrue((self.root / retired).exists())
+
+    def test_failure_while_removing_retired_file_restores_it(self):
+        added, retired = self.legacy_install()
+        real = Path.unlink
+        def fail_retired(path, *a, **k):
+            if str(path).endswith('TECH_ORCHESTRATOR.md'): raise OSError('simulated failure')
+            return real(path, *a, **k)
+        with mock.patch('builtins.input', return_value='yes'), mock.patch.object(Path, 'unlink', fail_retired), contextlib.redirect_stdout(io.StringIO()):
+            with self.assertRaises(OSError): cli.run(self.args('update', 'two', 'b' * 40))
+        self.assertEqual((self.root / retired).read_text(), 'old role\n')
+        self.assertFalse((self.root / added).exists())
+
 if __name__ == '__main__': unittest.main()
