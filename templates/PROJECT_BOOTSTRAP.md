@@ -3,6 +3,7 @@
 Project name: <name>
 Documents repository (decisions and requirements): <owner/repo>
 Code repository (work issues, code, architecture rules): <owner/repo>
+Design assets and prototypes (approved logo files, UI prototypes, other design files): <owner/repo or path / NONE>
 Project board: <URL or NONE>
 Founder: <role/identifier>
 Business Orchestrator runtime: <ChatGPT / other / not connected>
