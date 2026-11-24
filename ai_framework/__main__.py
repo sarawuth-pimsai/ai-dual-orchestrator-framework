@@ -13,7 +13,7 @@ import zipfile
 
 DOCS = ('AGENTS.md', 'GOVERNANCE.md', 'USAGE.md', 'roles/BUSINESS_ORCHESTRATOR.md',
         'roles/REQUIREMENTS.md', 'roles/IMPLEMENTATION.md', 'roles/PM_AGENT.md', 'roles/SPECIALISTS.md',
-        'protocols/HANDOFF_PROTOCOL.md', 'protocols/TECH_EXECUTION.md', 'protocols/PM_TRACKING.md',
+        'protocols/HANDOFF_PROTOCOL.md', 'protocols/TECH_EXECUTION.md', 'protocols/TASK_ISSUE_PROTOCOL.md', 'protocols/PM_TRACKING.md',
         'templates/PROJECT_BOOTSTRAP.md', 'templates/DECISION_RECORD.md', 'templates/HANDOFF.md',
         'templates/TASK_CONTRACT.md', 'templates/STATUS_REPORT.md', 'templates/RISK_REGISTER.md',
         'templates/PULL_REQUEST_TEMPLATE.md')
