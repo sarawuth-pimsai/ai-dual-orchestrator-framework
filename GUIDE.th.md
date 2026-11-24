@@ -1,6 +1,6 @@
 # คู่มือใช้งาน AI Dual-Orchestrator Framework
 
-คู่มือนี้อธิบายการติดตั้งและใช้งาน framework กับโปรเจกต์ของคุณ โดยใช้ release `v2.0.0` เป็นตัวอย่าง Framework เป็นชุดคำแนะนำและเอกสาร ไม่ใช่ระบบที่เปิด agent หรือส่งงานระหว่าง GPT กับ Claude ให้อัตโนมัติ
+คู่มือนี้อธิบายการติดตั้งและใช้งาน framework กับโปรเจกต์ของคุณ โดยใช้ release `v2.1.0` เป็นตัวอย่าง Framework เป็นชุดคำแนะนำและเอกสาร ไม่ใช่ระบบที่เปิด agent หรือส่งงานระหว่าง GPT กับ Claude ให้อัตโนมัติ
 
 ## 1. บทบาทและลำดับการทำงาน
 
@@ -28,20 +28,20 @@
 
 ### รุ่นปัจจุบันและการเตรียมใช้คำสั่งใหม่
 
-CLI ตั้งแต่ `v1.5.0` (รุ่นปัจจุบันคือ `v2.0.0`) ดาวน์โหลด checksum จาก GitHub Release อัตโนมัติและรองรับ `ai update` ส่วน CLI `v1.4.0` และรุ่นเก่ายังต้องใช้วิธีเดิม
+CLI ตั้งแต่ `v1.5.0` (รุ่นปัจจุบันคือ `v2.1.0`) ดาวน์โหลด checksum จาก GitHub Release อัตโนมัติและรองรับ `ai update` ส่วน CLI `v1.4.0` และรุ่นเก่ายังต้องใช้วิธีเดิม
 
 หากยังไม่มี CLI รุ่นนี้ ให้ดาวน์โหลดไฟล์จาก release มาตรวจ checksum ก่อน:
 
 ```sh
-curl -fL https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/download/v2.0.0/ai-framework -o /tmp/ai-framework-v2.0.0
-shasum -a 256 /tmp/ai-framework-v2.0.0
+curl -fL https://github.com/sarawuth-pimsai/ai-dual-orchestrator-framework/releases/download/v2.1.0/ai-framework -o /tmp/ai-framework-v2.1.0
+shasum -a 256 /tmp/ai-framework-v2.1.0
 ```
 
 ค่า SHA-256 ของไฟล์ CLI ใน release นี้คือ `836470f0a28ff6bfa32df40cd1d7519603d91681debaf7d18f39fe553548775f` ตรวจสอบค่าจากช่องทางที่เชื่อถือได้แยกจากแหล่งดาวน์โหลดก่อนติดตั้ง หาก `~/.local/bin/ai` มีไฟล์อยู่ คำสั่ง `cp` ด้านล่างจะเขียนทับไฟล์นั้น ให้ตรวจหรือสำรองก่อน:
 
 ```sh
 mkdir -p "$HOME/.local/bin"
-cp /tmp/ai-framework-v2.0.0 "$HOME/.local/bin/ai"
+cp /tmp/ai-framework-v2.1.0 "$HOME/.local/bin/ai"
 chmod +x "$HOME/.local/bin/ai"
 export PATH="$HOME/.local/bin:$PATH"
 ```
@@ -154,6 +154,8 @@ Handoff ฉบับเต็มใช้ `.ai-framework/framework/templates/HAN
 
 **ข้อควรรู้:** unit/integration test ของ Implementation **แทนที่** การ review โค้ดโดยผู้ตรวจอิสระซึ่งเคยเป็นขั้นตอนที่ 7 ใน `protocols/TECH_EXECUTION.md` นั่นคือ framework ตัดด่านอิสระออกหนึ่งด่าน และ test ที่ผู้เขียนเขียนเองตรวจได้เพียงความเข้าใจของผู้เขียนเอง Founder ยอมรับข้อนี้แล้ว **ไม่มี security checklist ข้อใดถูกตัดหรือผ่อน** ส่วนการวัดเชิงลึก เช่น branch coverage และ mutation testing เป็นคำสั่งเสริมที่ Founder สั่งเมื่ออยากได้ ไม่ใช่กฎของ Implementation
 
+**Task issue:** Requirements ตรวจ issue งานตามรายการใน `protocols/TASK_ISSUE_PROTOCOL.md` ก่อนเผยแพร่ ใช้คำนำหน้าคอมเมนต์ (READ, UNDERSTOOD, PLAN, PROPOSAL, QUESTION, EVIDENCE, REWORK, VERIFIED) เป็นสถานะของ issue และ Implementation แตก issue ใหญ่เป็น sub-issue ได้เองภายในงานที่ Founder อนุญาตแล้ว ตัวเลือกทางเทคนิคใน PROPOSAL ยังเป็น PROPOSED จนกว่า Founder อนุมัติ การรันซ้ำก่อน Ready เป็นทางเลือก ปิดไว้เป็นค่าเริ่มต้น
+
 ### คำอธิบาย PR 7 หัวข้อ
 
 ทุก PR ในทุก repository ใช้ 7 หัวข้อตามลำดับใน `.ai-framework/framework/templates/PULL_REQUEST_TEMPLATE.md` เขียนเป็นภาษาที่ Founder ต้องการ: (1) PR นี้คืออะไร (2) ไฟล์ที่เปลี่ยนและเหตุผล (3) สิ่งที่บันทึกหรือทำ (4) สิ่งที่ต้องรู้ก่อน merge (5) สิ่งที่ไม่เปลี่ยนและยังเปิดอยู่ (6) สิ่งที่คุณควรตรวจ (7) ตารางคำย่อและรหัสทุกตัวที่ใช้ หัวข้อที่ไม่มีเนื้อหาให้เขียนว่า "ไม่มี" GitHub เติม template ให้เฉพาะในเบราว์เซอร์ ดังนั้น session ที่เปิด PR ด้วย `gh pr create --body` ต้องคัดลอกหัวข้อเหล่านี้ลงใน body เอง
@@ -175,7 +177,7 @@ pm status — รวม milestone, dependencies, critical path และคว�
 
 ## 8. อัปเดตหรือย้อนเวอร์ชัน
 
-ใน CLI v1.5.0 ขึ้นไป (รวม v2.0.0) ใช้ `ai update` เพื่ออัปเดต CLI และใช้ `ai project update` จากโฟลเดอร์โปรเจกต์เพื่ออัปเดต framework แต่ละคำสั่งแสดงสิ่งที่จะเปลี่ยนและถามให้พิมพ์ `yes` ก่อนเขียน ใน CLI v1.4.0 `ai update` ยังไม่มี และการอัปเดตโปรเจกต์ยังต้องตั้ง trust file หรือระบุ `--sha256` ด้วยตนเอง
+ใน CLI v1.5.0 ขึ้นไป (รวม v2.1.0) ใช้ `ai update` เพื่ออัปเดต CLI และใช้ `ai project update` จากโฟลเดอร์โปรเจกต์เพื่ออัปเดต framework แต่ละคำสั่งแสดงสิ่งที่จะเปลี่ยนและถามให้พิมพ์ `yes` ก่อนเขียน ใน CLI v1.4.0 `ai update` ยังไม่มี และการอัปเดตโปรเจกต์ยังต้องตั้ง trust file หรือระบุ `--sha256` ด้วยตนเอง
 
 ตรวจ diff ก่อนยืนยัน การย้อน framework ใช้ `ai project update --commit FULL_COMMIT --sha256 TRUSTED_SHA256 --archive /path/to/old.zip` เก็บ ZIP และ checksum เดิมไว้ สำรองโปรเจกต์ก่อนอัปเดต: write error ปกติมีการพยายาม rollback แต่การหยุดกลางคันหรือเครื่องขัดข้องอาจต้องกู้เอง สำหรับ CLI ให้เก็บสำเนารุ่นก่อนที่ตรวจสอบแล้วไว้เพื่อกู้ด้วยตนเองหากจำเป็น
 
