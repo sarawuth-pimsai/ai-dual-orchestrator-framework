@@ -81,7 +81,7 @@ Troubleshooting: a 404 or authentication error requires verified private-reposit
 - `GOVERNANCE.md`: authority and lifecycle.
 - `roles/`: role instructions for Business, Requirements, Implementation and PM.
 - `roles/SPECIALISTS.md`: specialist ownership and boundaries.
-- `protocols/`: technical execution, handoff and tracking protocols.
+- `protocols/`: technical execution, task issue, handoff and tracking protocols.
 - `templates/`: reusable project documents, including the seven-heading pull request description template.
 - `USAGE.md`: session startup for ChatGPT, Claude Code and Codex.
 - `GUIDE.th.md`: Thai installation, workflow, handoff, PR and update guide (read from this repository; not included in the bootstrap-managed document set).

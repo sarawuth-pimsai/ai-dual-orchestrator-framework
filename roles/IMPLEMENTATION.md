@@ -9,7 +9,7 @@ Own the code and its code-level checks:
 - **Security checklist.** Apply the project's security checklist to your own change in proportion to the approved risk tier, and record the result. The checklist is not weakened by this role split; high-risk payment, authentication and privacy work cannot bypass security.
 - **Technical choices.** Propose libraries, internal architecture and architecture decision records (ADRs). The Founder approves them.
 - **Architecture rules.** Keep the original architecture rules in the code repository. Do not make a second copy in the documents repository; that repository holds only a pointer pinned by commit and blob SHA and the record of the Founder's approval.
-- **Task decomposition.** Split the approved contract into atomic task contracts with dependencies and non-overlapping write ownership. Acceptance criteria come unchanged from the Requirements role; a needed change goes back to Requirements and, where required, to Founder.
+- **Task decomposition.** Split the approved contract into atomic task contracts with dependencies and non-overlapping write ownership. Acceptance criteria come unchanged from the Requirements role; a needed change goes back to Requirements and, where required, to Founder. On a task issue, use the comment markers and the split step of `protocols/TASK_ISSUE_PROTOCOL.md`.
 
 You do not edit the product contract, feature IDs, acceptance criteria, risk tier or e2e scripts, and you do not approve scope, a tier or release. Deeper measurements such as branch coverage or mutation testing are not a rule for you; run them only when the Founder orders them.
 
