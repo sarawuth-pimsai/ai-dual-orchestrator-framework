@@ -22,6 +22,10 @@ printf '\nnew version\n' >> "$tmp/source/framework/GOVERNANCE.md"
 h2=$(hash "$tmp/two.zip"); c2=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 run() { "$cli" "$@" >/dev/null; }
 run init project "$tmp/project" --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip"
+# Every role, protocol and template in the repository must be installed by the CLI.
+for f in "$root"/roles/*.md "$root"/protocols/*.md "$root"/templates/*.md; do
+  [ -f "$tmp/project/.ai-framework/framework/${f#"$root"/}" ] || { echo "not installed by CLI: ${f#"$root"/}" >&2; exit 1; }
+done
 mkdir "$tmp/default-dir"
 (cd "$tmp/default-dir" && run init project --commit "$c1" --sha256 "$h1" --archive "$tmp/one.zip")
 [ "$(cat "$tmp/default-dir/.ai-framework/VERSION")" = "$c1" ]

@@ -157,6 +157,7 @@ roles/PM_AGENT.md
 roles/SPECIALISTS.md
 protocols/HANDOFF_PROTOCOL.md
 protocols/TECH_EXECUTION.md
+protocols/TASK_ISSUE_PROTOCOL.md
 protocols/PM_TRACKING.md
 templates/PROJECT_BOOTSTRAP.md
 templates/DECISION_RECORD.md
